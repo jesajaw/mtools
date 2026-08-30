@@ -1,0 +1,11 @@
+# mtools has no external dependencies -- everything used (tkinter,
+# csv, dataclasses, typing, pkgutil, importlib) is part of the
+# Python standard library.
+#
+# tkinter ships with the standard Windows/macOS installers. On some
+# Linux distros it's a separate package, e.g.:
+#   sudo apt install python3-tk
+#
+# As soon as an individual tool needs a third-party package (numpy,
+# scipy, ...), add it below and keep it scoped to that tool's own
+# requirements/imports.
