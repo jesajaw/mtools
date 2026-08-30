@@ -18,8 +18,9 @@ from tkinter import ttk
 import tools
 from core import discover_tools
 from theme import style
+from theme.windows_chrome import enable_dpi_awareness
 
-GRID_COLUMNS = 3
+GRID_COLUMNS_MAX = 3
 
 
 class MainWindow:
@@ -32,6 +33,7 @@ class MainWindow:
         self.tools = discover_tools(tools)
         self._build_header()
         self._build_grid()
+        self._size_to_content()
 
     def _build_header(self) -> None:
         header = ttk.Frame(self.root, padding=10)
@@ -46,11 +48,12 @@ class MainWindow:
             ttk.Label(container, text="No tools found under tools/.").pack(anchor="w")
             return
 
-        for col in range(GRID_COLUMNS):
+        columns = min(GRID_COLUMNS_MAX, len(self.tools))
+        for col in range(columns):
             container.columnconfigure(col, weight=1)
 
         for i, entry in enumerate(self.tools):
-            row, col = divmod(i, GRID_COLUMNS)
+            row, col = divmod(i, columns)
             self._build_cell(container, row, col, entry)
 
     def _build_cell(self, parent: ttk.Frame, row: int, col: int, entry) -> None:
@@ -66,11 +69,18 @@ class MainWindow:
         )
         ttk.Button(cell, text="Open", style="Accent.TButton",
                    command=lambda e=entry: e.open_window(self.root)).pack(anchor="e")
-
+        
+    def _size_to_content(self) -> None:
+        count = len(self.tools) or 1
+        columns = min(GRID_COLUMNS_MAX, count)
+        rows = -(-count // columns)  # ceil division
+        width = columns * (style.CELL_WIDTH + 12) + 40
+        height = 70 + rows * (style.CELL_HEIGHT + 12) + 40
+        self.root.geometry(f"{width}x{height}")
 
 def main() -> None:
+    enable_dpi_awareness()
     root = tk.Tk()
-    root.geometry("850x600")
     MainWindow(root)
     root.mainloop()
 

@@ -50,8 +50,10 @@ def apply_style(root) -> None:
     building widgets."""
     import tkinter as tk
     from tkinter import ttk
+    from .windows_chrome import apply_dark_titlebar
 
     root.configure(bg=COLOR_BG)
+    apply_dark_titlebar(root)
 
     style = ttk.Style(root)
     style.theme_use("clam")
