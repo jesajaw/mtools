@@ -16,7 +16,7 @@ import tkinter as tk
 from tkinter import ttk
 
 import tools
-from core.registry import discover_tools
+from core import discover_tools
 from theme import style
 
 GRID_COLUMNS = 3
