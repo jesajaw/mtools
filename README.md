@@ -7,20 +7,29 @@ A small tkinter framework around a collection of regression/analysis ~ mathemati
 
 ## Features
 
-* **Centralized Launchpad (`main.py`):** Provides a clean, tile-based dashboard that acts as a single entry point for all mathematical and analysis scripts.
-* **Dynamic Tool Discovery (`registry.py`):** Automatically scans the `tools/` directory on startup, importing and registering new tools without modifying core files.
-* **Modular Architecture:** Separates pure computation scripts from GUI logic, allowing existing command-line scripts to be integrated easily.
-* **Customizable Themes:** Supports fast palette switching (`dark_purple`, `dark_blue`, `black_white`) via a centralized style configuration (`theme/style.py`).
+* **Central Launchpad (`main.py`):** Single entry point dashboard GUI for all integrated tools.
+* **Dynamic Discovery (`registry.py`):** Automatically scans and registers new tools from `tools/`.
+* **Modular Architecture:** Strict separation between computational logic and GUI code.
+* **Themes:** Centralized palette configuration (`dark_purple`, `dark_blue`, `black_white`).
 
-### Included & Planned Mathematical Tools
+## Tools
 
-* **Linear & Exponential Fit:** Baseline regression tools for curve fitting, parameter estimation, and basic visualization.
-* **AFM Data Analysis:** Specialized tool modules tailored for parsing, leveling, and analyzing Atomic Force Microscopy datasets.
-- [ ] **Statistische Zusammenfassung (Descriptive Stats)** – Schnelle Berechnung von Mittelwert, Median, Standardabweichung, Varianz, Min/Max und Quartilen für importierte Datensätze.
-- [ ] **Daten-Glättung & Filter** – Filterfunktionen wie gleitender Durchschnitt (Moving Average) oder Savitzky-Golay-Filter zur Rauschreduzierung.
-- [ ] **Baseline-Korrektur / Leveling** – Besonders nützlich für AFM-Daten oder Messkurven mit Offset oder Hintergrunddrift.
-- [ ] **Fourier-Transformation (FFT)** – Für Frequenzanalysen von zeitbasierten Signalen oder oszillierenden Messdaten.
-
+* **fitting/**
+  * Linear, quadratic & polynomial fits \todo
+  * Exponential & logarithmic fits \todo
+  * Multivariate regressions \todo
+* **afm/**
+  * Topography processing, leveling & profile extraction \todo
+* **ODE/** / **PDE/**
+  * Solvers for ordinary & partial differential equations \todo
+* **statistics/**
+  * Descriptive statistics, distributions & outlier detection \todo
+* **spectroscopy/**
+  * Spectral analysis & peak fitting \todo
+* **simulation/**
+  * Physical modeling & Monte Carlo simulation \todo
+* **transformation/**
+  * FFT, frequency filtering & data normalization \todo
 
 ## Structure
 
