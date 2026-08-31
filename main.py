@@ -4,6 +4,11 @@ Reads the tools/ package at startup (core.registry.discover_tools) and dynamical
 To add a new tool: create a new folder under tools/ with an __init__.py (TOOL_NAME, TOOL_DESCRIPTION, open_window) -- main.py does not need to be touched.
 """
 
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
 import tkinter as tk
 from tkinter import ttk
 

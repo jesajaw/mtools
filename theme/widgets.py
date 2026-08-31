@@ -101,3 +101,53 @@ class OutputPanel(ttk.Frame):
         else:
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
+
+class ComputeToolWindow(ToolWindow):
+    """Covers the common case: pick a file, compute a result from it,
+    show/save the result. Subclass and override compute() (and
+    optionally format_result()/save_result()) -- no need to hand-wire
+    FileInputRow/OutputPanel/Compute-button/run() again per tool.
+
+    Class attributes to override as needed:
+        input_label, input_filetypes -- passed to FileInputRow
+        output_label -- passed to OutputPanel
+    """
+
+    input_label = "Input file"
+    input_filetypes = (("All files", "*.*"),)
+    output_label = "Result"
+
+    def __init__(self, parent, title: str, description: str = ""):
+        super().__init__(parent, title=title, description=description)
+
+        self.file_input = FileInputRow(
+            self.content, label=self.input_label, filetypes=self.input_filetypes,
+        )
+        self.file_input.pack(fill="x", pady=(0, 8))
+
+        self.output = OutputPanel(self.content, label=self.output_label, on_save=self.save_result)
+        self.output.pack(fill="both", expand=True, pady=(0, 8))
+
+        ttk.Button(self.content, text="Compute", style="Accent.TButton",
+                   command=self.run).pack(anchor="e")
+
+    def compute(self, path: str):
+        raise NotImplementedError
+
+    def format_result(self, result) -> str:
+        return str(result)
+
+    def save_result(self, path: str, content: str) -> None:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(content)
+
+    def run(self) -> None:
+        if not self.file_input.path:
+            dialogs.show_error(self, "No file", "Please select a file first.")
+            return
+        try:
+            result = self.compute(self.file_input.path)
+        except Exception as e:
+            dialogs.show_error(self, "Computation failed", str(e))
+            return
+        self.output.set_text(self.format_result(result))
