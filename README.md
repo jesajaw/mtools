@@ -2,7 +2,29 @@
 
 A small tkinter framework around a collection of regression/analysis ~ mathematicall scripts. Instead of calling each script separately, `main.py` opens a selection window; picking a tool opens that tool's own window with its inputs, outputs, and (where needed) file selection etc. ~ there will be more tools over time.
 
-# Structure
+## Features
+
+* **Centralized Launchpad (`main.py`):** Provides a clean, tile-based dashboard that acts as a single entry point for all mathematical and analysis scripts.
+* **Dynamic Tool Discovery (`registry.py`):** Automatically scans the `tools/` directory on startup, importing and registering new tools without modifying core files.
+* **Modular Architecture:** Separates pure computation scripts from GUI logic, allowing existing command-line scripts to be integrated easily.
+* **Customizable Themes:** Supports fast palette switching (`dark_purple`, `dark_blue`, `black_white`) via a centralized style configuration (`theme/style.py`).
+
+### Included & Planned Mathematical Tools
+
+* **Linear & Exponential Fit:** Baseline regression tools for curve fitting, parameter estimation, and basic visualization.
+* **AFM Data Analysis:** Specialized tool modules tailored for parsing, leveling, and analyzing Atomic Force Microscopy datasets.
+* **Statistical Summary Tool:** Generates descriptive statistics (mean, median, standard deviation, variance) for imported tabular data.
+* **Polynomial & Logarithmic Regression:** Advanced fitting scripts for non-linear data trends.
+
+### Future Development To-Dos
+
+* **Interactive Plotting:** Integrate embedded Matplotlib canvases directly into tool windows for real-time data visualization.
+* **Export Capabilities:** Add standard export options (CSV, PNG, PDF) for generated graphs and computation results.
+* **Batch Processing Support:** Enable users to run analysis scripts across multiple files simultaneously.
+* **Undo/Redo & State Persistence:** Save user input preferences and window states between sessions.
+
+
+## Structure
 
 ```
 mtools/
@@ -29,7 +51,7 @@ mtools/
     may new structure hierachy here -> subfolders: regression, analysis etc.
 ```
 
-# Running
+## Running
 
 After cloning, just bash in the right path:
 ```
@@ -37,7 +59,7 @@ python main.py
 ```
 Opens the main window with one tile per discovered tool. Click "Open" to launch that tool's window.
 
-# Adding a new tool
+## Adding a new tool
 
 1. Create a folder under `tools/`, e.g. `tools/exp_fit/`.
 2. Drop your existing computation script in there unchanged (e.g. `regression.py`), as a plain function with no GUI dependency.
@@ -56,11 +78,11 @@ Opens the main window with one tile per discovered tool. Click "Open" to launch 
 `main.py` picks it up automatically on the next start -- no other
 file needs to change.
 
-# Theme
+## Theme
 
 Switch palette via `COLOR_SCHEME` in `theme/style.py` (`dark_purple`, `dark_blue`, `black_white`) in `theme/style.py`
 
-# Requirements
+## Requirements
 
 Standard library only -- see `requirements.txt` . tkinter ships with the standard Windows/macOS Python installers; on some Linux distros install it separately (`sudo apt install python3-tk`).
 
