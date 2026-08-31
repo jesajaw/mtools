@@ -1,12 +1,13 @@
 """
-Placeholder for one of your existing regression scripts. Pure computation, no GUI dependency -- gui.py only calls fit_from_csv(). This keeps existing scripts untouched; each tool just needs a thin gui.py wrapper.
+Placeholder for the computing script -- pure computation, no GUI dependency -- gui.py only calls fit_from_csv().
+This keeps existing scripts untouched; each tool just needs a thin gui.py wrapper.
 """
 
 import csv
 
 
 def fit_from_csv(path: str) -> dict:
-    # Expects a CSV with two columns (x, y), returns the least squares linear fit y = a*x + b.
+    # Expects a CSV with two columns (x, y), returns a dict with solved example A to B
     xs, ys = [], []
     with open(path, newline="", encoding="utf-8") as f:
         for row in csv.reader(f):
@@ -16,11 +17,11 @@ def fit_from_csv(path: str) -> dict:
                 xs.append(float(row[0]))
                 ys.append(float(row[1]))
             except ValueError:
-                continue  # e.g. header row
+                continue
 
     n = len(xs)
     if n < 2:
-        raise ValueError("At least 2 valid (x, y) rows are required.")
+        raise ValueError("At least 2 valid (x, y) rows are required.") # show error in gui
 
     mean_x = sum(xs) / n
     mean_y = sum(ys) / n

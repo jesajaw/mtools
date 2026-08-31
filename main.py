@@ -10,7 +10,6 @@ from tkinter import ttk
 import tools
 from core import discover_tools
 from theme import style
-from theme.windows_chrome import enable_dpi_awareness
 
 GRID_COLUMNS_MAX = 3
 
@@ -55,12 +54,8 @@ class MainWindow:
         cell.configure(width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
 
         ttk.Label(cell, text=entry.name, style="CellTitle.TLabel").pack(anchor="w")
-        ttk.Label(cell, text=entry.description, style="Status.TLabel",
-                  wraplength=style.CELL_WIDTH - 20, justify="left").pack(
-            anchor="w", pady=(4, 8), fill="x"
-        )
-        ttk.Button(cell, text="Open", style="Accent.TButton",
-                   command=lambda e=entry: e.open_window(self.root)).pack(anchor="e")
+        ttk.Label(cell, text=entry.description, style="Status.TLabel", wraplength=style.CELL_WIDTH - 20, justify="left").pack(anchor="w", pady=(4, 8), fill="x")
+        ttk.Button(cell, text="Open", style="Accent.TButton", command=lambda e=entry: e.open_window(self.root)).pack(anchor="e")
         
     def _size_to_content(self) -> None:
         count = len(self.tools) or 1
@@ -71,7 +66,7 @@ class MainWindow:
         self.root.geometry(f"{width}x{height}")
 
 def main() -> None:
-    enable_dpi_awareness()
+    style.enable_dpi_awareness()
     root = tk.Tk()
     MainWindow(root)
     root.mainloop()

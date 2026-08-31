@@ -17,10 +17,16 @@ mtools/
 │   ├── tool_base.py          # tool interface contract (ToolEntry)
 │   └── registry.py           # scans tools/, imports & collects them
 └── tools/
+│   ├── gui_elements.py       # some standart elements which are may used over multiple tools (in-/output)
     └── example_linear_fit/   # template for real tools
         ├── __init__.py       # TOOL_NAME, TOOL_DESCRIPTION, open_window()
         ├── gui.py            # 2nd window: file input, run, output
         └── regression.py     # pure computation (your existing script goes here)
+    └── regression/
+    └── analysis/
+    └── afm data/
+    └── .../
+    may new structure hierachy here -> subfolders: regression, analysis etc.
 ```
 
 # Running
@@ -56,7 +62,7 @@ Switch palette via `COLOR_SCHEME` in `theme/style.py` (`dark_purple`, `dark_blue
 
 # Requirements
 
-Standard library only -- see `requirements.txt`. tkinter ships with the standard Windows/macOS Python installers; on some Linux distros install it separately (`sudo apt install python3-tk`).
+Standard library only -- see `requirements.txt` . tkinter ships with the standard Windows/macOS Python installers; on some Linux distros install it separately (`sudo apt install python3-tk`).
 
 # License
 
