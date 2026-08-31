@@ -2,6 +2,9 @@
 
 A small tkinter framework around a collection of regression/analysis ~ mathematicall scripts. Instead of calling each script separately, `main.py` opens a selection window; picking a tool opens that tool's own window with its inputs, outputs, and (where needed) file selection etc. ~ there will be more tools over time.
 
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 ## Features
 
 * **Centralized Launchpad (`main.py`):** Provides a clean, tile-based dashboard that acts as a single entry point for all mathematical and analysis scripts.
