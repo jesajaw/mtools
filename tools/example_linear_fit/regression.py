@@ -1,16 +1,12 @@
 """
-Placeholder for one of your existing regression scripts. Pure
-computation, no GUI dependency -- gui.py only calls fit_from_csv().
-This keeps existing scripts untouched; each tool just needs a thin
-gui.py wrapper.
+Placeholder for one of your existing regression scripts. Pure computation, no GUI dependency -- gui.py only calls fit_from_csv(). This keeps existing scripts untouched; each tool just needs a thin gui.py wrapper.
 """
 
 import csv
 
 
 def fit_from_csv(path: str) -> dict:
-    """Expects a CSV with two columns (x, y), returns the least-
-    squares linear fit y = a*x + b."""
+    # Expects a CSV with two columns (x, y), returns the least squares linear fit y = a*x + b.
     xs, ys = [], []
     with open(path, newline="", encoding="utf-8") as f:
         for row in csv.reader(f):

@@ -1,16 +1,15 @@
 """
-Central theme for mtools.
-
-Color scheme matches previous convention (see DMX Derby Controller
-reference): several palettes are available, the active one is chosen
-via COLOR_SCHEME. Every window (main + tool windows) calls
-apply_style() once on root/Toplevel and shares the same style names
-(Cell.TFrame, CellTitle.TLabel, Status.TLabel, ...).
+Central theme for mtools: several palettes are available, the active one is chosen via COLOR_SCHEME.
+Every window (main + tool windows) calls apply_style() once on root/Toplevel and shares the same style names (Cell.TFrame, CellTitle.TLabel, Status.TLabel, ...).
 """
 
 # ------------------------------------------------------------
-# Color schemes (as before: several palettes, one active)
+# Color schemes
 # ------------------------------------------------------------
+
+# dark_purple -- dark_blue -- black_white
+COLOR_SCHEME = "dark_purple"
+
 _SCHEMES = {
     "dark_purple": dict(
         BG="#1e1e24", BG_LIGHT="#2a2a33", FG="#e0dff0",
@@ -26,8 +25,6 @@ _SCHEMES = {
     ),
 }
 
-COLOR_SCHEME = "dark_purple"  # switch palette here
-
 _active = _SCHEMES[COLOR_SCHEME]
 COLOR_BG = _active["BG"]
 COLOR_BG_LIGHT = _active["BG_LIGHT"]
@@ -37,20 +34,22 @@ COLOR_DARK = _active["ACCENT_DARK"]
 COLOR_STATUS_TEXT = _active["STATUS_TEXT"]
 
 # ------------------------------------------------------------
-# Layout constants (cell grid, as before)
+# Layout
 # ------------------------------------------------------------
 CELL_WIDTH = 260
 CELL_HEIGHT = 110
 STATUS_LABEL_CHARS = 32
 
+import tkinter as tk
+from tkinter import ttk
+from .windows_chrome import apply_dark_titlebar
+
 
 def apply_style(root) -> None:
-    """Applies the theme to root (Tk or Toplevel): background +
-    ttk styles. Call once per window (main, tool windows) before
-    building widgets."""
-    import tkinter as tk
-    from tkinter import ttk
-    from .windows_chrome import apply_dark_titlebar
+    """
+    Applies the theme to root (Tk or Toplevel): background + ttk styles.
+    Call once per window (main, tool windows) before building widgets.
+    """
 
     root.configure(bg=COLOR_BG)
     apply_dark_titlebar(root)
@@ -64,13 +63,10 @@ def apply_style(root) -> None:
     style.configure("TLabelframe.Label", background=COLOR_BG, foreground=COLOR)
     style.configure("TLabel", background=COLOR_BG, foreground=COLOR_FG)
 
-    style.configure("TButton", background=COLOR_BG_LIGHT, foreground=COLOR_FG,
-                     bordercolor=COLOR_DARK, focusthickness=1, padding=6)
-    style.map("TButton", background=[("active", COLOR_DARK), ("pressed", COLOR)],
-              foreground=[("active", COLOR_FG)])
+    style.configure("TButton", background=COLOR_BG_LIGHT, foreground=COLOR_FG, bordercolor=COLOR_DARK, focusthickness=1, padding=6)
+    style.map("TButton", background=[("active", COLOR_DARK), ("pressed", COLOR)], foreground=[("active", COLOR_FG)])
 
-    style.configure("TCombobox", fieldbackground=COLOR_BG_LIGHT, background=COLOR_BG_LIGHT,
-                     foreground=COLOR_FG, arrowcolor=COLOR)
+    style.configure("TCombobox", fieldbackground=COLOR_BG_LIGHT, background=COLOR_BG_LIGHT, foreground=COLOR_FG, arrowcolor=COLOR)
     style.map("TCombobox", fieldbackground=[("readonly", COLOR_BG_LIGHT)])
     style.configure("Horizontal.TScale", background=COLOR_BG, troughcolor=COLOR_BG_LIGHT)
     style.configure("TEntry", fieldbackground=COLOR_BG_LIGHT, foreground=COLOR_FG, insertcolor=COLOR_FG)

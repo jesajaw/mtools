@@ -1,6 +1,6 @@
-"""Registration for the 'Linear Regression' tool -- template for
-all further tools. Every tool package needs exactly these three
-names, main.py finds the rest automatically (see core/registry.py)."""
+"""
+Registration for the 'Linear Regression' tool -- template for all further tools. Every tool package needs exactly these three names, main.py finds the rest automatically (see core/registry.py).
+"""
 
 from .gui import ToolWindow
 

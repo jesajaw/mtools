@@ -1,7 +1,7 @@
-"""Themed popups for mtools (replacement for tkinter.messagebox/
-simpledialog), ported from the DMX reference script. File selection
-uses the native tkinter.filedialog, since OS file dialogs can't be
-themed anyway."""
+"""
+Themed popups for mtools, ported from the DMX reference script.
+File selection uses the native tkinter.filedialog, since OS file dialogs can't be themed anyway.
+"""
 
 import tkinter as tk
 from tkinter import ttk, filedialog
@@ -9,8 +9,8 @@ from tkinter import ttk, filedialog
 from . import style
 
 
-class ThemedDialog(tk.Toplevel):
-    """Modal popup styled to match the app's color scheme."""
+class Themed_Dialog(tk.Toplevel):
+    # Modal popup styled to match the app's color scheme.
 
     def __init__(self, parent, title: str, message: str, buttons: list[str], with_entry: bool = False):
         super().__init__(parent)
@@ -23,9 +23,7 @@ class ThemedDialog(tk.Toplevel):
         self.result: str | None = None
         self.entry_value: str | None = None
 
-        ttk.Label(self, text=message, wraplength=280, justify="left").pack(
-            padx=20, pady=(20, 10)
-        )
+        ttk.Label(self, text=message, wraplength=280, justify="left").pack(padx=20, pady=(20, 10))
 
         if with_entry:
             self.entry = ttk.Entry(self, width=30)
@@ -36,8 +34,7 @@ class ThemedDialog(tk.Toplevel):
         btn_row = ttk.Frame(self)
         btn_row.pack(padx=20, pady=(0, 20))
         for label in buttons:
-            ttk.Button(btn_row, text=label,
-                       command=lambda l=label: self._on_button(l)).pack(side="left", padx=5)
+            ttk.Button(btn_row, text=label, command=lambda l=label: self._on_button(l)).pack(side="left", padx=5)
 
         self.bind("<Escape>", lambda e: self._on_button(None))
         self.protocol("WM_DELETE_WINDOW", lambda: self._on_button(None))
@@ -60,22 +57,22 @@ class ThemedDialog(tk.Toplevel):
 
 
 def show_error(parent, title: str, message: str) -> None:
-    ThemedDialog(parent, title, message, buttons=["OK"])
+    Themed_Dialog(parent, title, message, buttons=["OK"])
 
 
 def ask_yes_no(parent, title: str, message: str) -> bool:
-    dlg = ThemedDialog(parent, title, message, buttons=["Yes", "No"])
+    dlg = Themed_Dialog(parent, title, message, buttons=["Yes", "No"])
     return dlg.result == "Yes"
 
 
 def ask_string(parent, title: str, message: str) -> str | None:
-    dlg = ThemedDialog(parent, title, message, buttons=["OK", "Cancel"], with_entry=True)
+    dlg = Themed_Dialog(parent, title, message, buttons=["OK", "Cancel"], with_entry=True)
     if dlg.result == "OK" and dlg.entry_value:
         return dlg.entry_value
     return None
 
 
 def ask_open_file(parent, title: str = "Select file", filetypes=(("All files", "*.*"),)) -> str | None:
-    """Native file picker, returns the chosen path or None."""
+    # Native file picker, returns the chosen path or None.
     path = filedialog.askopenfilename(parent=parent, title=title, filetypes=filetypes)
     return path or None

@@ -1,6 +1,5 @@
 """
-Interface that every tool package under tools/<name>/__init__.py
-must provide so main.py can find and display it automatically.
+Interface that every tool package under tools/<name>/__init__.py must provide so main.py can find and display it automatically.
 
 A tool package needs the following in its __init__.py:
 
@@ -24,7 +23,7 @@ class ToolModule(Protocol):
 
 @dataclass
 class ToolEntry:
-    """Metadata for a discovered tool, collected by the registry."""
+    # Metadata for a discovered tool, collected by the registry.
     module_name: str
     name: str
     description: str

@@ -1,11 +1,9 @@
 # mtools
 
-A small tkinter framework around a collection of regression/analysis
-scripts. Instead of calling each script separately, `main.py` opens
-a selection window; picking a tool opens that tool's own window with
-its inputs, outputs, and (where needed) file selection.
+A small tkinter framework around a collection of regression/analysis ~ mathematicall scripts.
+Instead of calling each script separately, `main.py` opens a selection window; picking a tool opens that tool's own window with its inputs, outputs, and (where needed) file selection.
 
-## Structure
+# Structure
 
 ```
 mtools/
@@ -25,7 +23,7 @@ mtools/
         └── regression.py         # pure computation (your existing script goes here)
 ```
 
-## Running
+# Running
 
 ```
 python main.py
@@ -34,7 +32,7 @@ python main.py
 Opens the main window with one tile per discovered tool. Click
 "Open" to launch that tool's window.
 
-## Adding a new tool
+# Adding a new tool
 
 1. Create a folder under `tools/`, e.g. `tools/exp_fit/`.
 2. Drop your existing computation script in there unchanged (e.g.
@@ -55,7 +53,7 @@ Opens the main window with one tile per discovered tool. Click
 `main.py` picks it up automatically on the next start -- no other
 file needs to change.
 
-## Theme
+# Theme
 
 Ported from an earlier project (DMX Derby Controller): `clam` ttk
 theme, cell-grid layout, `ThemedDialog` instead of
@@ -63,12 +61,12 @@ theme, cell-grid layout, `ThemedDialog` instead of
 `COLOR_SCHEME` in `theme/style.py` (`dark_purple`, `dark_blue`,
 `black_white`).
 
-## Requirements
+# Requirements
 
 Standard library only -- see `requirements.txt`. tkinter ships with
 the standard Windows/macOS Python installers; on some Linux distros
 install it separately (`sudo apt install python3-tk`).
 
-## License
+# License
 
 MIT, see `LICENSE`.

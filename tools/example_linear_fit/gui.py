@@ -1,6 +1,6 @@
-"""2nd window for 'Linear Regression'. Meant as a template for
-further tools: file input, run button, output -- same theme as the
-main window."""
+"""
+2nd window for 'Linear Regression'. Meant as a template for further tools: file input, run button, output -- same theme as the main window.
+"""
 
 import tkinter as tk
 from tkinter import ttk
@@ -35,8 +35,7 @@ class ToolWindow(tk.Toplevel):
         frame = ttk.LabelFrame(self, text="Result", padding=10)
         frame.pack(fill="both", expand=True, padx=10, pady=5)
 
-        self.output = tk.Text(frame, height=8, bg=style.COLOR_BG_LIGHT, fg=style.COLOR_FG,
-                               insertbackground=style.COLOR_FG, relief="flat")
+        self.output = tk.Text(frame, height=8, bg=style.COLOR_BG_LIGHT, fg=style.COLOR_FG, insertbackground=style.COLOR_FG, relief="flat")
         self.output.pack(fill="both", expand=True)
         self.output.configure(state="disabled")
 
