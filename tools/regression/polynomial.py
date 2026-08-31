@@ -7,7 +7,7 @@ is not finished yet -- see the NOTE inside process().
 
 import mathlib as t
 from theme.widgets import ComputeToolWindow
-from .._points import load_points
+from ._points import load_points
 
 TOOL_NAME = "Polynomial"
 TOOL_DESCRIPTION = "Quadratic least-squares fit y = c0 + c1*x + c2*x^2 (2D)."
