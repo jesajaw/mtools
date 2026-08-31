@@ -1,0 +1,45 @@
+# Python Byte-compiled / Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+.env
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.spyderproject
+.spyproject
+
+# OS / System
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build & Packaging (falls Executables oder Wheels gebaut werden)
+build/
+dist/
+*.spec
+*.egg-info/
+
+# Lokale Daten & Exporte (Messdaten / Fits nicht im Git tracken)
+*.csv
+*.xlsx
+*.dat
+*.ibw
+*.spm
+output/
+temp/
