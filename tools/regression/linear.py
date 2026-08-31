@@ -1,0 +1,58 @@
+"""
+Linear regression tool. Wraps the existing process() logic unchanged:
+2D does a least-squares slope/intercept fit; 3D fits a best-fit
+line/plane through the point cloud via covariance + power iteration.
+"""
+
+import tools.mathlib as t
+from theme.widgets import ComputeToolWindow
+from ._points import load_points
+
+TOOL_NAME = "Linear"
+TOOL_DESCRIPTION = "Least-squares line fit (2D) or best-fit line/plane via PCA (3D)."
+
+
+def process(points):
+    n, d, x, y, z = t.split_points(points)
+    if not y:
+        y = list(range(n))
+    if not z:
+        slope = (
+            n * t.sum_list(t.products(x, y)) - t.sum_list(x) * t.sum_list(y)
+        ) / (n * t.sum_list(x_i ** 2 for x_i in x) - t.sum_list(x) ** 2)
+        (cx, cy) = t.mean([x, y])
+        return slope, (cy - slope * cx), d, (x, y)
+    else:
+        (cx, cy, cz) = t.mean([x, y, z])
+        field = t.shift([x, y, z], [cx, cy, cz])
+        return (
+            (cx, cy, cz),
+            t.power_iteration([[t.covariance(a, b) for b in field] for a in field]),
+            d, (x, y, z)
+        )
+
+
+class ToolWindow(ComputeToolWindow):
+    input_label = "Points file"
+    input_filetypes = (("CSV files", "*.csv"), ("All files", "*.*"))
+
+    def __init__(self, parent):
+        super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
+
+    def compute(self, path: str):
+        return process(load_points(path))
+
+    def format_result(self, result) -> str:
+        if len(result) == 4 and isinstance(result[0], (int, float)):
+            slope, intercept, d, _ = result
+            return f"slope = {slope:.6g}\nintercept = {intercept:.6g}\ndimension = {d}\n"
+        center, direction, d, _ = result
+        return (
+            f"center = {tuple(round(v, 6) for v in center)}\n"
+            f"direction = {tuple(round(v, 6) for v in direction)}\n"
+            f"dimension = {d}\n"
+        )
+
+
+def open_window(parent) -> None:
+    ToolWindow(parent)
