@@ -59,6 +59,7 @@ mtools/
         ├── multivariate.py     # Multivariate regression tool
         ├── polynomial.py       # Polynomial fit tool
         └── quadratic.py        # Quadratic fit tool
+```
 
 ## Running
 
