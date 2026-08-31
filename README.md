@@ -33,38 +33,40 @@ A small tkinter framework around a collection of regression/analysis ~ mathemati
 
 ## Structure
 
-```
+```text
 mtools/
-├── main.py                   # main window
-├── requirements.txt
-├── LICENSE
-├── README
-├── theme/
-│   ├── style.py              # color scheme + ttk styles
-│   └── dialogs.py            # ThemedDialog, show_error, ask_yes_no, ask_string, ask_open_file
+├── main.py                     # Main launcher GUI
+├── requirements.txt            # Python dependencies
+├── LICENSE                     # License file
+├── README.md                   # Project documentation
+├── .gitignore                  # Git exclusion rules
 ├── core/
-│   ├── tool_base.py          # tool interface contract (ToolEntry)
-│   └── registry.py           # scans tools/, imports & collects them
+│   ├── registry.py             # Scans tools/, imports & registers modules
+│   └── tool_base.py            # Base contract / interface for tools
+├── theme/
+│   ├── dialogs.py              # Themed dialogs (errors, confirmation, file prompts)
+│   ├── style.py                # Palette themes & ttk styling
+│   └── widgets.py              # Custom reusable UI elements
 └── tools/
-│   ├── gui_elements.py       # some standart elements which are may used over multiple tools (in-/output)
-    └── example_linear_fit/   # template for real tools
-        ├── __init__.py       # TOOL_NAME, TOOL_DESCRIPTION, open_window()
-        ├── gui.py            # 2nd window: file input, run, output
-        └── regression.py     # pure computation (your existing script goes here)
-    └── regression/
-    └── analysis/
-    └── afm data/
-    └── .../
-    may new structure hierachy here -> subfolders: regression, analysis etc.
-```
+    ├── mathlib.py              # Shared math routines
+    ├── example/                # Reference template for new tools
+    │   └── template.py         # Tool GUI template
+    └── fitting/                # Regression & curve fitting tools
+        ├── _points.py          # Point handling & helper routines
+        ├── exponential.py      # Exponential fit tool
+        ├── linear.py           # Linear fit tool
+        ├── logarithmic.py      # Logarithmic fit tool
+        ├── multivariate.py     # Multivariate regression tool
+        ├── polynomial.py       # Polynomial fit tool
+        └── quadratic.py        # Quadratic fit tool
 
 ## Running
 
-After cloning, just bash in the right path:
-```
+Clone the repository, navigate into the project directory, and execute `main.py`:
+
+```bash
 python main.py
 ```
-Opens the main window with one tile per discovered tool. Click "Open" to launch that tool's window.
 
 ## Adding a new tool
 
