@@ -4,7 +4,7 @@ Linear regression tool. Wraps the existing process() logic unchanged:
 line/plane through the point cloud via covariance + power iteration.
 """
 
-import mathlib as t
+import tools.mathlib as t
 from theme.widgets import ComputeToolWindow
 from ._points import load_points
 
