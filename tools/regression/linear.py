@@ -4,9 +4,9 @@ Linear regression tool. Wraps the existing process() logic unchanged:
 line/plane through the point cloud via covariance + power iteration.
 """
 
-import tools.mathlib as t
+import mathlib as t
 from theme.widgets import ComputeToolWindow
-from .._points import load_points
+from ._points import load_points
 
 TOOL_NAME = "Linear"
 TOOL_DESCRIPTION = "Least-squares line fit (2D) or best-fit line/plane via PCA (3D)."
