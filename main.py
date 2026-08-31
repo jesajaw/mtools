@@ -1,15 +1,7 @@
 """
-mtools - main window
+Reads the tools/ package at startup (core.registry.discover_tools) and dynamically builds a selection grid, one cell per discovered tool. Clicking "Open" calls open_window(root) on the corresponding tool module, which builds its own 2nd window (Toplevel).
 
-Reads the tools/ package at startup (core.registry.discover_tools)
-and dynamically builds a selection grid, one cell per discovered
-tool -- analogous to the channel grid in the DMX reference script.
-Clicking "Open" calls open_window(root) on the corresponding tool
-module, which builds its own 2nd window (Toplevel).
-
-To add a new tool: create a new folder under tools/ with an
-__init__.py (TOOL_NAME, TOOL_DESCRIPTION, open_window) -- main.py
-does not need to be touched.
+To add a new tool: create a new folder under tools/ with an __init__.py (TOOL_NAME, TOOL_DESCRIPTION, open_window) -- main.py does not need to be touched.
 """
 
 import tkinter as tk
