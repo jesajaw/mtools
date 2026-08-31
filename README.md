@@ -13,15 +13,10 @@ A small tkinter framework around a collection of regression/analysis ~ mathemati
 
 * **Linear & Exponential Fit:** Baseline regression tools for curve fitting, parameter estimation, and basic visualization.
 * **AFM Data Analysis:** Specialized tool modules tailored for parsing, leveling, and analyzing Atomic Force Microscopy datasets.
-* **Statistical Summary Tool:** Generates descriptive statistics (mean, median, standard deviation, variance) for imported tabular data.
-* **Polynomial & Logarithmic Regression:** Advanced fitting scripts for non-linear data trends.
-
-### Future Development To-Dos
-
-* **Interactive Plotting:** Integrate embedded Matplotlib canvases directly into tool windows for real-time data visualization.
-* **Export Capabilities:** Add standard export options (CSV, PNG, PDF) for generated graphs and computation results.
-* **Batch Processing Support:** Enable users to run analysis scripts across multiple files simultaneously.
-* **Undo/Redo & State Persistence:** Save user input preferences and window states between sessions.
+- [ ] **Statistische Zusammenfassung (Descriptive Stats)** – Schnelle Berechnung von Mittelwert, Median, Standardabweichung, Varianz, Min/Max und Quartilen für importierte Datensätze.
+- [ ] **Daten-Glättung & Filter** – Filterfunktionen wie gleitender Durchschnitt (Moving Average) oder Savitzky-Golay-Filter zur Rauschreduzierung.
+- [ ] **Baseline-Korrektur / Leveling** – Besonders nützlich für AFM-Daten oder Messkurven mit Offset oder Hintergrunddrift.
+- [ ] **Fourier-Transformation (FFT)** – Für Frequenzanalysen von zeitbasierten Signalen oder oszillierenden Messdaten.
 
 
 ## Structure
