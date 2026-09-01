@@ -1,8 +1,17 @@
 """
-Reusable building blocks for tool windows, so each tool's gui.py doesn't have to rebuild the same layout from scratch. Provides templates for:
-- ToolWindow: a themed Toplevel with a title, a description line and a `self.content` frame that subclasses fill with their own inputs/outputs/parameters
-- FileInputRow: a labeled "browse for input file" row (e.g. a file of measurements/points), calls a callback with the chosen path
-- OutputPanel: a text area for computed results plus a "Save..." button that writes them to a file via a callback
+theme/widgets.py
+
+Reusable building blocks for tool windows, so each tool's gui.py
+doesn't have to rebuild the same layout from scratch. Provides
+templates for:
+
+- ToolWindow: a themed Toplevel with a title, a description line,
+  and a `self.content` frame that subclasses fill with their own
+  inputs/outputs/parameters
+- FileInputRow: a labeled "browse for input file" row (e.g. a file
+  of measurements/points), calls a callback with the chosen path
+- OutputPanel: a text area for computed results plus a "Save..."
+  button that writes them to a file via a callback
 
 Extend this file with more shared widgets as new tools need them.
 """
@@ -14,7 +23,9 @@ from . import style, dialogs
 
 
 class ToolWindow(tk.Toplevel):
-    # Base window for a tool: themed Toplevel with a title, an optional description line, and a `self.content` frame that subclasses fill with their own widgets/parameters.
+    """Base window for a tool: themed Toplevel with a title, an
+    optional description line, and a `self.content` frame that
+    subclasses fill with their own widgets/parameters."""
 
     def __init__(self, parent, title: str, description: str = "", size: str = "420x360"):
         super().__init__(parent)
@@ -26,16 +37,20 @@ class ToolWindow(tk.Toplevel):
         header.pack(fill="x")
         ttk.Label(header, text=title, font=("Segoe UI", 12, "bold")).pack(anchor="w")
         if description:
-            ttk.Label(header, text=description, style="Status.TLabel", wraplength=380, justify="left").pack(anchor="w", pady=(4, 0))
+            ttk.Label(header, text=description, style="Status.TLabel",
+                      wraplength=380, justify="left").pack(anchor="w", pady=(4, 0))
 
         self.content = ttk.Frame(self, padding=10)
         self.content.pack(fill="both", expand=True)
 
 
 class FileInputRow(ttk.Frame):
-    # A labeled row for picking an input file (e.g. measurements or points), with a 'Browse...' button. Calls on_file_selected(path) whenever a file is chosen. self.path holds the current selection.
+    """A labeled row for picking an input file (e.g. measurements or
+    points), with a 'Browse...' button. Calls on_file_selected(path)
+    whenever a file is chosen. self.path holds the current selection."""
 
-    def __init__(self, parent, label: str = "Input file", on_file_selected=None, filetypes=(("All files", "*.*"),)):
+    def __init__(self, parent, label: str = "Input file", on_file_selected=None,
+                 filetypes=(("All files", "*.*"),)):
         super().__init__(parent)
         self.on_file_selected = on_file_selected
         self.filetypes = filetypes
@@ -60,9 +75,14 @@ class FileInputRow(ttk.Frame):
 
 
 class OutputPanel(ttk.Frame):
-    # A read-only text area for computed results plus a 'Save...' button. set_text() updates the shown result; the save button opens a save-file dialog and calls on_save(path, text) -- or, if no callback is given, writes the text to that path directly.
+    """A read-only text area for computed results plus a 'Save...'
+    button. set_text() updates the shown result; the save button
+    opens a save-file dialog and calls on_save(path, text) -- or,
+    if no callback is given, writes the text to that path directly."""
 
-    def __init__(self, parent, label: str = "Result", on_save=None, filetypes=(("Text files", "*.txt"), ("All files", "*.*")), default_extension: str = ".txt"):
+    def __init__(self, parent, label: str = "Result", on_save=None,
+                 filetypes=(("Text files", "*.txt"), ("All files", "*.*")),
+                 default_extension: str = ".txt"):
         super().__init__(parent)
         self.on_save = on_save
         self.filetypes = filetypes
@@ -71,7 +91,8 @@ class OutputPanel(ttk.Frame):
         box = ttk.LabelFrame(self, text=label, padding=10)
         box.pack(fill="both", expand=True)
 
-        self.text = tk.Text(box, height=8, bg=style.COLOR_BG_LIGHT, fg=style.COLOR_FG, insertbackground=style.COLOR_FG, relief="flat")
+        self.text = tk.Text(box, height=8, bg=style.COLOR_BG_LIGHT, fg=style.COLOR_FG,
+                             insertbackground=style.COLOR_FG, relief="flat")
         self.text.pack(fill="both", expand=True)
         self.text.configure(state="disabled")
 
@@ -101,6 +122,7 @@ class OutputPanel(ttk.Frame):
         else:
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)
+
 
 class ComputeToolWindow(ToolWindow):
     """Covers the common case: pick a file, compute a result from it,
@@ -132,12 +154,18 @@ class ComputeToolWindow(ToolWindow):
                    command=self.run).pack(anchor="e")
 
     def compute(self, path: str):
+        """Override: turn the input file path into a result (any
+        type -- format_result() below turns it into display text)."""
         raise NotImplementedError
 
     def format_result(self, result) -> str:
+        """Override if the result needs custom formatting. Default:
+        plain str(result)."""
         return str(result)
 
     def save_result(self, path: str, content: str) -> None:
+        """Override for a custom save format (e.g. CSV instead of
+        plain text). Default: write the displayed text as-is."""
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
 

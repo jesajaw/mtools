@@ -1,5 +1,5 @@
 """
-Reads the tools/ package at startup (core.registry.discover_tools) and dynamically builds a selection grid, one cell per discovered tool. Clicking "Open" calls open_window(root) on the corresponding tool module, which builds its own 2nd window (Toplevel).
+Reads the tools/ package at startup (core.registry.discover_tools) and dynamically builds a selection grid, one cell per discovered tool. Clicking a tile calls open_window(root) on the corresponding tool module, which builds its own 2nd window (Toplevel).
 
 To add a new tool: create a new folder under tools/ with an __init__.py (TOOL_NAME, TOOL_DESCRIPTION, open_window) -- main.py does not need to be touched.
 """
@@ -68,13 +68,27 @@ class MainWindow:
             ttk.Label(container, text="No tools found under tools/.").pack(anchor="w")
             return
 
-        columns = min(GRID_COLUMNS_MAX, len(self.tools))
-        for col in range(columns):
+        for col in range(GRID_COLUMNS_MAX):
             container.columnconfigure(col, weight=1)
 
-        for i, entry in enumerate(self.tools):
-            row, col = divmod(i, columns)
-            self._build_cell(container, row, col, entry)
+        grouped: dict[str, list] = {}
+        for entry in self.tools:
+            grouped.setdefault(entry.category, []).append(entry)
+
+        row_cursor = 0
+        for category in sorted(grouped, key=str.lower):
+            entries = grouped[category]
+
+            header = ttk.Label(container, text=category.replace("_", " ").upper(),
+                                style="CategoryHeader.TLabel")
+            header.grid(row=row_cursor, column=0, columnspan=GRID_COLUMNS_MAX,
+                        sticky="w", pady=(12 if row_cursor else 0, 6))
+            row_cursor += 1
+
+            for i, entry in enumerate(entries):
+                r, c = divmod(i, GRID_COLUMNS_MAX)
+                self._build_cell(container, row_cursor + r, c, entry)
+            row_cursor += -(-len(entries) // GRID_COLUMNS_MAX)  # ceil division
 
     def _build_cell(self, parent: ttk.Frame, row: int, col: int, entry) -> None:
         cell = ttk.Frame(parent, padding=8, relief="groove", style="Cell.TFrame")
@@ -82,19 +96,58 @@ class MainWindow:
         cell.pack_propagate(False)
         cell.configure(width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
 
-        ttk.Label(cell, text=entry.name, style="CellTitle.TLabel").pack(anchor="w")
-        ttk.Label(cell, text=entry.description, style="Status.TLabel", wraplength=style.CELL_WIDTH - 20, justify="left").pack(anchor="w", pady=(4, 8), fill="x")
-        ttk.Button(cell, text="Open", style="Accent.TButton", command=lambda e=entry: e.open_window(self.root)).pack(anchor="e")
-        
+        title = ttk.Label(cell, text=entry.name, style="CellTitle.TLabel")
+        title.pack(anchor="w")
+        desc = ttk.Label(cell, text=entry.description, style="Status.TLabel",
+                          wraplength=style.CELL_WIDTH - 20, justify="left")
+        desc.pack(anchor="w", pady=(4, 8), fill="x")
+
+        self._make_cell_clickable(cell, title, desc, entry)
+
+    def _make_cell_clickable(self, cell: ttk.Frame, title: ttk.Label, desc: ttk.Label, entry) -> None:
+        widgets = (cell, title, desc)
+
+        def _open(_event=None) -> None:
+            entry.open_window(self.root)
+
+        def _on_enter(_event=None) -> None:
+            cell.configure(style="CellHover.TFrame")
+            title.configure(style="CellTitleHover.TLabel")
+            desc.configure(style="StatusHover.TLabel")
+
+        def _on_leave(_event=None) -> None:
+            cell.configure(style="Cell.TFrame")
+            title.configure(style="CellTitle.TLabel")
+            desc.configure(style="Status.TLabel")
+
+        for w in widgets:
+            w.configure(cursor="hand2")
+            w.bind("<Button-1>", _open)
+            w.bind("<Enter>", _on_enter)
+            w.bind("<Leave>", _on_leave)
+
     def _size_to_content(self) -> None:
-        count = len(self.tools) or 1
-        columns = min(GRID_COLUMNS_MAX, count)
-        rows = -(-count // columns)  # ceil division
-        width = columns * (style.CELL_WIDTH + 12) + 40
-        ideal_height = 90 + rows * (style.CELL_HEIGHT + 12) + 40
+        if not self.tools:
+            self.root.geometry(f"{GRID_COLUMNS_MAX * (style.CELL_WIDTH + 12) + 40}x300")
+            return
+
+        counts: dict[str, int] = {}
+        for entry in self.tools:
+            counts[entry.category] = counts.get(entry.category, 0) + 1
+
+        header_height = 34
+        total_cell_rows = sum(-(-n // GRID_COLUMNS_MAX) for n in counts.values())
+        width = GRID_COLUMNS_MAX * (style.CELL_WIDTH + 12) + 40
+        ideal_height = (
+            90
+            + len(counts) * header_height
+            + total_cell_rows * (style.CELL_HEIGHT + 12)
+            + 40
+        )
         max_height = int(self.root.winfo_screenheight() * 0.8)
         height = min(ideal_height, max_height)
         self.root.geometry(f"{width}x{height}")
+
 
 def main() -> None:
     style.enable_dpi_awareness()

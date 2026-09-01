@@ -5,7 +5,7 @@ The 3D branch is carried over unchanged from the original script and
 is not finished yet -- see the NOTE inside process().
 """
 
-import tools.mathlib as t
+import mathlib as t
 from theme.widgets import ComputeToolWindow
 from ._points import load_points
 
