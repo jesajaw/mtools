@@ -37,8 +37,32 @@ class MainWindow:
         ttk.Label(header, text="Select a tool", font=("Segoe UI", 12, "bold")).pack(anchor="w")
 
     def _build_grid(self) -> None:
-        container = ttk.Frame(self.root, padding=10)
-        container.pack(fill="both", expand=True)
+        outer = ttk.Frame(self.root)
+        outer.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
+        canvas = tk.Canvas(outer, bg=style.COLOR_BG, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(outer, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        container = ttk.Frame(canvas, padding=10)
+        canvas_window = canvas.create_window((0, 0), window=container, anchor="nw")
+
+        def _sync_scrollregion(_event=None) -> None:
+            canvas.configure(scrollregion=canvas.bbox("all"))
+
+        def _sync_container_width(event) -> None:
+            canvas.itemconfig(canvas_window, width=event.width)
+
+        container.bind("<Configure>", _sync_scrollregion)
+        canvas.bind("<Configure>", _sync_container_width)
+
+        def _on_mousewheel(event) -> None:
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+        canvas.bind("<Enter>", lambda e: canvas.bind_all("<MouseWheel>", _on_mousewheel))
+        canvas.bind("<Leave>", lambda e: canvas.unbind_all("<MouseWheel>"))
 
         if not self.tools:
             ttk.Label(container, text="No tools found under tools/.").pack(anchor="w")
@@ -67,7 +91,9 @@ class MainWindow:
         columns = min(GRID_COLUMNS_MAX, count)
         rows = -(-count // columns)  # ceil division
         width = columns * (style.CELL_WIDTH + 12) + 40
-        height = 70 + rows * (style.CELL_HEIGHT + 12) + 40
+        ideal_height = 90 + rows * (style.CELL_HEIGHT + 12) + 40
+        max_height = int(self.root.winfo_screenheight() * 0.8)
+        height = min(ideal_height, max_height)
         self.root.geometry(f"{width}x{height}")
 
 def main() -> None:

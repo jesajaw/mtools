@@ -12,24 +12,40 @@ A small tkinter framework around a collection of regression/analysis ~ mathemati
 * **Modular Architecture:** Strict separation between computational logic and GUI code.
 * **Themes:** Centralized palette configuration (`dark_purple`, `dark_blue`, `black_white`).
 
-## Tools
+## Tools -- todo
 
 * **fitting/**
-  * Linear, quadratic & polynomial fits \todo
-  * Exponential & logarithmic fits \todo
-  * Multivariate regressions \todo
+  * **Regression Models:** Linear, polynomial, exponential, logarithmic, and custom non-linear curve fitting as well as multivariate.
+
 * **afm/**
-  * Topography processing, leveling & profile extraction \todo
+  * **Geometry:** Tools for rotating, mirroring, cropping, and leveling height data (via polynomial fit or 3-point leveling).
+  * **Filters & Defects:** Noise reduction (Gaussian, median) and correction of measurement artifacts like line scars or bad data points.
+  * **Roughness:** Calculation of surface roughness parameters according to ISO standards (such as $R_a$, $R_q$) and statistical height distributions.
+  * **Grain Analysis:** Segmentation and measurement of individual surface structures/grains (size, height, volume) using thresholding.
+
 * **ODE/** / **PDE/**
-  * Solvers for ordinary & partial differential equations \todo
+  * Solvers for ordinary & partial differential equations
+
 * **statistics/**
-  * Descriptive statistics, distributions & outlier detection \todo
+  * **Descriptive Statistics:** Calculation of central tendency (mean, median, mode) and dispersion (variance, standard deviation, range, interquartile range).
+  * **Hypothesis Testing:** Execution of statistical tests such as t-tests, ANOVA, and Chi-Square tests to evaluate hypotheses and determine significance ($p$-values).
+  * **Probability Distributions:** Evaluation of common probability distributions (normal, binomial, Poisson) and calculation of probability density/mass functions (PDF/PMF and CDF).
+  * **Data Preprocessing:** Tools for handling missing data, outlier detection, normalization, and standardization.
+  * **Confidence Intervals:** Estimation of population parameters with specified confidence levels to quantify uncertainty.
+
 * **spectroscopy/**
-  * Spectral analysis & peak fitting \todo
+  * Spectral analysis & peak fitting
 * **simulation/**
-  * Physical modeling & Monte Carlo simulation \todo
+  * Physical modeling & Monte Carlo simulation, SRIM
 * **transformation/**
-  * FFT, frequency filtering & data normalization \todo
+  * FFT, frequency filtering & data normalization, Laplace
+
+* **optics/**
+  * **Diffraction & Interference:** Calculations involving the grating equation, interference patterns, and diffraction limits for various optical configurations.
+  * **Wavefront & Propagation:** Modeling light propagation and phase transformations.
+
+* **units/**
+  * **Conversion & Dimensional Analysis:** Conversion between SI and imperial units, custom unit definitions.
 
 ## Structure
 
@@ -51,15 +67,9 @@ mtools/
     ├── mathlib.py              # Shared math routines
     ├── example/                # Reference template for new tools
     │   └── template.py         # Tool GUI template
-    └── fitting/                # Regression & curve fitting tools
-        ├── _points.py          # Point handling & helper routines
-        ├── exponential.py      # Exponential fit tool
-        ├── linear.py           # Linear fit tool
-        ├── logarithmic.py      # Logarithmic fit tool
-        ├── multivariate.py     # Multivariate regression tool
-        ├── polynomial.py       # Polynomial fit tool
-        └── quadratic.py        # Quadratic fit tool
+    ...
 ```
+... see [Tools](#tools----todo)
 
 ## Running
 
