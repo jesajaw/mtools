@@ -1,12 +1,5 @@
-"""
-Registration for the 'example_template' -- template for all further tools. Every tool package needs exactly these three names, main.py finds the rest automatically (see core/registry.py).
-"""
-
-from .template import ToolWindow
-
-TOOL_NAME = "Example Tool"
-TOOL_DESCRIPTION = "Example A to B from a file."
-
-
-def open_window(parent) -> None:
-    ToolWindow(parent)
+"""Category folder: example tools/templates. Add new tool modules
+here, or start a new category folder elsewhere -- each tool module
+must expose TOOL_NAME, TOOL_DESCRIPTION, open_window (see
+template.py). This file itself carries no tool metadata, it just
+makes the folder a package."""

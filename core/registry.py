@@ -40,6 +40,19 @@ def discover_tools(tools_package: ModuleType) -> list[ToolEntry]:
     return entries
 
 
+def _ensure_project_root_on_path(tools_package: ModuleType) -> None:
+    """Tool modules (e.g. tools/regression/linear.py) import shared,
+    project-root-level modules like mathlib.py via a plain `import
+    mathlib`. That only resolves if the project root is on sys.path --
+    guaranteed when running `python main.py` from the project root,
+    but not necessarily when some other file is run/debugged directly.
+    This makes discovery work either way."""
+    tools_dir = os.path.dirname(os.path.abspath(tools_package.__file__))
+    project_root = os.path.dirname(tools_dir)
+    if project_root not in sys.path:
+        sys.path.insert(0, project_root)
+
+
 def _discover_tools_in_category(category_module: ModuleType) -> list[ToolEntry]:
     entries: list[ToolEntry] = []
     category_name = category_module.__name__.rsplit(".", 1)[-1]
@@ -70,15 +83,3 @@ def _discover_tools_in_category(category_module: ModuleType) -> list[ToolEntry]:
             open_window=module.open_window,
         ))
     return entries
-
-def _ensure_project_root_on_path(tools_package: ModuleType) -> None:
-    """Tool modules (e.g. tools/regression/linear.py) import shared,
-    project-root-level modules like mathlib.py via a plain `import
-    mathlib`. That only resolves if the project root is on sys.path --
-    guaranteed when running `python main.py` from the project root,
-    but not necessarily when some other file is run/debugged directly.
-    This makes discovery work either way."""
-    tools_dir = os.path.dirname(os.path.abspath(tools_package.__file__))
-    project_root = os.path.dirname(tools_dir)
-    if project_root not in sys.path:
-        sys.path.insert(0, project_root)
