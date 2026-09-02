@@ -37,6 +37,7 @@ def square_root (values):
 
 def distance(p0, p1):
     return square_root(tuple(square(p0[i]-p1[i])) for i in range(len(p0)))
+    return square_root(sum(square((p0[i] - p1[i]) for i in range(len(p0)))))
 
 def shift(values_list, shiftvalue_list):
     return [

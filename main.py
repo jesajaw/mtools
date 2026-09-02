@@ -15,6 +15,7 @@ from tkinter import ttk
 import tools
 from core import discover_tools
 from theme import style
+from theme.widgets import DataBar
 
 GRID_COLUMNS_MAX = 3
 
@@ -28,6 +29,7 @@ class MainWindow:
 
         self.tools = discover_tools(tools)
         self._build_header()
+        self._build_data_bar()
         self._build_grid()
         self._size_to_content()
 
@@ -35,6 +37,10 @@ class MainWindow:
         header = ttk.Frame(self.root, padding=10)
         header.pack(fill="x")
         ttk.Label(header, text="Select a tool", font=("Segoe UI", 12, "bold")).pack(anchor="w")
+
+    def _build_data_bar(self) -> None:
+        DataBar(self.root).pack(fill="x", padx=10)
+        ttk.Separator(self.root, orient="horizontal").pack(fill="x", padx=10, pady=(10, 0))
 
     def _build_grid(self) -> None:
         outer = ttk.Frame(self.root)
@@ -71,24 +77,29 @@ class MainWindow:
         for col in range(GRID_COLUMNS_MAX):
             container.columnconfigure(col, weight=1)
 
+        # Utilities (dataio) are fixed, hand-wired entries -- not part
+        # of the dynamically discovered tools/ categories. Rendered
+        # first, separated from the topic categories by a divider.
+        row_cursor = 0
+
         grouped: dict[str, list] = {}
         for entry in self.tools:
             grouped.setdefault(entry.category, []).append(entry)
 
-        row_cursor = 0
         for category in sorted(grouped, key=str.lower):
-            entries = grouped[category]
+            row_cursor = self._build_category_block(container, row_cursor, category.replace("_", " ").upper(), grouped[category])
 
-            header = ttk.Label(container, text=category.replace("_", " ").upper(),
-                                style="CategoryHeader.TLabel")
-            header.grid(row=row_cursor, column=0, columnspan=GRID_COLUMNS_MAX,
-                        sticky="w", pady=(12 if row_cursor else 0, 6))
-            row_cursor += 1
+    def _build_category_block(self, container: ttk.Frame, row_cursor: int, label: str, entries: list) -> int:
+        header = ttk.Label(container, text=label, style="CategoryHeader.TLabel")
+        header.grid(row=row_cursor, column=0, columnspan=GRID_COLUMNS_MAX,
+                    sticky="w", pady=(12 if row_cursor else 0, 6))
+        row_cursor += 1
 
-            for i, entry in enumerate(entries):
-                r, c = divmod(i, GRID_COLUMNS_MAX)
-                self._build_cell(container, row_cursor + r, c, entry)
-            row_cursor += -(-len(entries) // GRID_COLUMNS_MAX)  # ceil division
+        for i, entry in enumerate(entries):
+            r, c = divmod(i, GRID_COLUMNS_MAX)
+            self._build_cell(container, row_cursor + r, c, entry)
+        row_cursor += -(-len(entries) // GRID_COLUMNS_MAX)  # ceil division
+        return row_cursor
 
     def _build_cell(self, parent: ttk.Frame, row: int, col: int, entry) -> None:
         cell = ttk.Frame(parent, padding=8, relief="groove", style="Cell.TFrame")
@@ -140,6 +151,7 @@ class MainWindow:
         width = GRID_COLUMNS_MAX * (style.CELL_WIDTH + 12) + 40
         ideal_height = (
             90
+            + 70  # data bar + separator
             + len(counts) * header_height
             + total_cell_rows * (style.CELL_HEIGHT + 12)
             + 40

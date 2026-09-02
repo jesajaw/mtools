@@ -1,11 +1,11 @@
 """
-Geometry -- not implemented yet.
+Matrix Decomposition -- not implemented yet.
 """
 
 from theme.widgets import ComputeToolWindow
 
-TOOL_NAME = "Geometry"
-TOOL_DESCRIPTION = "Rotate, mirror, crop, and level height data (via polynomial fit or 3-point leveling). -- not implemented yet."
+TOOL_NAME = "Matrix Decomposition"
+TOOL_DESCRIPTION = "LU, QR, and SVD decomposition. -- not implemented yet."
 
 
 class ToolWindow(ComputeToolWindow):
@@ -16,7 +16,7 @@ class ToolWindow(ComputeToolWindow):
         super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
 
     def compute(self, data):
-        raise NotImplementedError("Geometry not implemented yet.")
+        raise NotImplementedError("Matrix Decomposition not implemented yet.")
 
 
 def open_window(parent) -> None:

@@ -6,7 +6,6 @@ line/plane through the point cloud via covariance + power iteration.
 
 import tools.mathlib as t
 from theme.widgets import ComputeToolWindow
-from ._points import load_points
 
 TOOL_NAME = "Linear"
 TOOL_DESCRIPTION = "Least-squares line fit (2D) or best-fit line/plane via PCA (3D)."
@@ -39,8 +38,8 @@ class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
         super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
 
-    def compute(self, path: str):
-        return process(load_points(path))
+    def compute(self, data):
+        return process(data)
 
     def format_result(self, result) -> str:
         if len(result) == 4 and isinstance(result[0], (int, float)):
