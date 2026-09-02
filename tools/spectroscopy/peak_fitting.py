@@ -15,7 +15,7 @@ class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
         super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
 
-    def compute(self, path: str):
+    def compute(self, data):
         raise NotImplementedError("Peak Fitting not implemented yet.")
 
 
