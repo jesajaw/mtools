@@ -1,14 +1,33 @@
 """
-Linear regression tool. Wraps the existing process() logic unchanged:
-2D does a least-squares slope/intercept fit; 3D fits a best-fit
-line/plane through the point cloud via covariance + power iteration.
+Linear regression tool. Wraps the existing process() logic unchanged: 2D does a least-squares slope/intercept fit; 3D fits a best-fit
+line through the point cloud via covariance + power iteration (PCA, first principal component).
 """
 
 import tools.mathlib as t
 from theme.widgets import ComputeToolWindow
 
 TOOL_NAME = "Linear"
-TOOL_DESCRIPTION = "Least-squares line fit (2D) or best-fit line/plane via PCA (3D)."
+TOOL_DESCRIPTION = "Least-squares line fit (2D) or best-fit line via PCA (3D)."
+
+
+def _fit_2d(n, x, y):
+    """Ordinary least-squares slope/intercept fit, minimizing vertical (y) residuals."""
+    slope = (
+        n * t.sum_list(t.products(x, y)) - t.sum_list(x) * t.sum_list(y)
+    ) / (n * t.sum_list(t.square(x)) - t.sum_list(x) ** 2)
+    cx, cy = t.mean([x, y])
+    intercept = cy - slope * cx
+    return slope, intercept
+
+
+def _fit_3d(x, y, z):
+    """Best-fit line through the point cloud (PCA, dominant eigenvector of the
+    covariance/scatter matrix), minimizing perpendicular distance to the line."""
+    cx, cy, cz = t.mean([x, y, z])
+    field = t.shift([x, y, z], [cx, cy, cz])
+    cov = [[t.scatter(a, b) for b in field] for a in field]
+    direction = t.power_iteration(cov)
+    return (cx, cy, cz), direction
 
 
 def process(points):
@@ -16,19 +35,10 @@ def process(points):
     if not y:
         y = list(range(n))
     if not z:
-        slope = (
-            n * t.sum_list(t.products(x, y)) - t.sum_list(x) * t.sum_list(y)
-        ) / (n * t.sum_list(x_i ** 2 for x_i in x) - t.sum_list(x) ** 2)
-        (cx, cy) = t.mean([x, y])
-        return slope, (cy - slope * cx), d, (x, y)
-    else:
-        (cx, cy, cz) = t.mean([x, y, z])
-        field = t.shift([x, y, z], [cx, cy, cz])
-        return (
-            (cx, cy, cz),
-            t.power_iteration([[t.covariance(a, b) for b in field] for a in field]),
-            d, (x, y, z)
-        )
+        slope, intercept = _fit_2d(n, x, y)
+        return slope, intercept, d, (x, y)
+    center, direction = _fit_3d(x, y, z)
+    return center, direction, d, (x, y, z)
 
 
 class ToolWindow(ComputeToolWindow):
