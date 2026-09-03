@@ -8,15 +8,17 @@ templates for:
 - ToolWindow: a themed Toplevel with a title, a description line,
   and a `self.content` frame that subclasses fill with their own
   inputs/outputs/parameters
-- FileInputRow: a labeled "browse for input file" row (e.g. a file
-  of measurements/points), calls a callback with the chosen path
 - OutputPanel: a text area for computed results plus a "Save..."
   button that writes them to a file via a callback
 - ComputeToolWindow: the common "load or reuse workspace data, run
   compute(), show/save the result" tool window -- reads/writes the
   shared data.store workspace so tools can be chained
+- Cell: a clickable tile (title, optional status line, hover
+  highlight) -- the one building block every cell in the app is
+  made from, whether that's a tool in the main window's grid or
+  Load/Save in DataBar
 - DataBar: the persistent "Input | Output" bar shown at the top of
-  the main window, wired directly to data.store
+  the main window, built from two Cells, wired directly to data.store
 
 Extend this file with more shared widgets as new tools need them.
 """
@@ -26,88 +28,73 @@ from tkinter import ttk, filedialog
 from pathlib import Path
 
 from data import store
-from data.loaders import load_points, parse_points
+from data.loaders import load_points
 from data.savers import save_points_csv
 
 from . import style, dialogs
 
 
-class ToolWindow(tk.Toplevel):
-    """Base window for a tool: themed Toplevel with a title, an
-    optional description line, and a `self.content` frame that
-    subclasses fill with their own widgets/parameters."""
+class Cell(ttk.Frame):
+    """A clickable tile: title, optional description/status line,
+    hover highlight -- the one class every cell in the app is built
+    from, whether that's a tool in the main grid (main.py's
+    _build_cell) or Load/Save in DataBar below.
 
-    def __init__(self, parent, title: str, description: str = "", size: str = "420x360"):
-        super().__init__(parent)
-        self.title(title)
-        self.geometry(size)
-        style.apply_style(self)
+    status_text is the description line. Leave it out (None, the
+    default) for a cell that never shows one -- no status_label is
+    even created then, so set_status() is a no-op for that cell.
+    extra_button is an optional (text, command) pair rendered as a
+    small button in the cell's corner -- its own widget, so it
+    doesn't also trigger the cell's on_click (used for 'Clear' on
+    the Save cell: a rarer, secondary action that shouldn't be one
+    accidental cell-click away from Save)."""
 
-        header = ttk.Frame(self, padding=10)
-        header.pack(fill="x")
-        ttk.Label(header, text=title, font=("Segoe UI", 12, "bold")).pack(anchor="w")
-        if description:
-            ttk.Label(header, text=description, style="Status.TLabel",
-                      wraplength=380, justify="left").pack(anchor="w", pady=(4, 0))
+    def __init__(self, parent, title: str, on_click, status_text: str | None = None,
+                 wraplength: int = style.CELL_WIDTH - 20, extra_button=None):
+        super().__init__(parent, padding=8, relief="groove", style="Cell.TFrame")
+        self.on_click = on_click
+        self.pack_propagate(False)
+        self.configure(width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
 
-        self.content = ttk.Frame(self, padding=10)
-        self.content.pack(fill="both", expand=True)
+        self.title_label = ttk.Label(self, text=title, style="CellTitle.TLabel")
+        self.title_label.pack(anchor="w")
 
+        self.status_label = None
+        clickable = [self, self.title_label]
+        if status_text is not None:
+            self.status_label = ttk.Label(self, text=status_text, style="Status.TLabel",
+                                           wraplength=wraplength, justify="left")
+            self.status_label.pack(anchor="w", pady=(4, 8), fill="x")
+            clickable.append(self.status_label)
 
-class FileInputRow(ttk.Frame):
-    """A labeled row for picking an input file (e.g. measurements or
-    points), with a 'Browse...' button, plus a manual-entry text box
-    below it for pasting/typing points when no file is at hand --
-    both live in the same box, no separate input widget. Calls
-    on_file_selected(path) when a file is chosen, or on_data_entered(data)
-    when manually entered text is parsed and confirmed. self.path
-    holds the current file selection (stays None for manual entry)."""
+        for w in clickable:
+            w.configure(cursor="hand2")
+            w.bind("<Button-1>", self._on_click)
+            w.bind("<Enter>", self._on_enter)
+            w.bind("<Leave>", self._on_leave)
 
-    def __init__(self, parent, label: str = "Input file", on_file_selected=None,
-                 on_data_entered=None, filetypes=(("All files", "*.*"),)):
-        super().__init__(parent)
-        self.on_file_selected = on_file_selected
-        self.on_data_entered = on_data_entered
-        self.filetypes = filetypes
-        self.path: str | None = None
+        if extra_button:
+            text, command = extra_button
+            ttk.Button(self, text=text, command=command).pack(anchor="e")
 
-        box = ttk.LabelFrame(self, text=label, padding=10)
-        box.pack(fill="x")
+    def set_status(self, text: str) -> None:
+        if self.status_label is not None:
+            self.status_label.configure(text=text)
 
-        file_row = ttk.Frame(box)
-        file_row.pack(fill="x")
-        self.path_label = ttk.Label(file_row, text="no file selected", style="Status.TLabel")
-        self.path_label.pack(side="left", fill="x", expand=True)
-        ttk.Button(file_row, text="Browse...", command=self._browse).pack(side="right")
+    def _on_click(self, _event=None) -> None:
+        self.on_click()
 
-        ttk.Label(box, text='...or enter points manually (one per line, e.g. "x,y"):',
-                  style="Status.TLabel").pack(anchor="w", pady=(8, 2))
-        self.manual_text = tk.Text(box, height=4, bg=style.COLOR_BG_LIGHT, fg=style.COLOR_FG,
-                                    insertbackground=style.COLOR_FG, relief="flat")
-        self.manual_text.pack(fill="x")
-        ttk.Button(box, text="Use this data", command=self._use_manual).pack(anchor="e", pady=(6, 0))
+    def _on_enter(self, _event=None) -> None:
+        self.configure(style="CellHover.TFrame")
+        self.title_label.configure(style="CellTitleHover.TLabel")
+        if self.status_label is not None:
+            self.status_label.configure(style="StatusHover.TLabel")
 
-    def _browse(self) -> None:
-        path = dialogs.ask_open_file(self, title="Select file", filetypes=self.filetypes)
-        if not path:
-            return
-        self.path = path
-        self.path_label.config(text=path)
-        if self.on_file_selected:
-            self.on_file_selected(path)
-
-    def _use_manual(self) -> None:
-        text = self.manual_text.get("1.0", "end-1c")
-        if not text.strip():
-            dialogs.show_error(self, "No data", "Please enter at least one point.")
-            return
-        try:
-            data = parse_points(text)
-        except Exception as e:
-            dialogs.show_error(self, "Parse failed", str(e))
-            return
-        if self.on_data_entered:
-            self.on_data_entered(data)
+    def _on_leave(self, _event=None) -> None:
+        self.configure(style="Cell.TFrame")
+        self.title_label.configure(style="CellTitle.TLabel")
+        if self.status_label is not None:
+            self.status_label.configure(style="Status.TLabel")
 
 
 class OutputPanel(ttk.Frame):
@@ -160,35 +147,55 @@ class OutputPanel(ttk.Frame):
                 f.write(content)
 
 
-class ComputeToolWindow(ToolWindow):
-    """Covers the common case: use the shared workspace data (if
-    something is loaded, see data.store) or load a file, compute a
-    result from it, show/save the result. Subclass and override
-    compute() (and optionally format_result()/save_result()).
+class ToolWindow(tk.Toplevel):
+    """Base window for a tool: themed Toplevel with a title, an
+    optional description line, and a `self.content` frame that
+    subclasses fill with their own widgets/parameters."""
 
-    Shows exactly ONE data row at a time -- never a file picker AND a
-    "currently loaded" display together:
-    - store.is_loaded() -> a status line ("Using loaded data: ...")
-      plus a "Load different file..." button
-    - nothing loaded -> a FileInputRow; picking a file loads it into
-      the shared workspace immediately (so the next tool can reuse it)
+    def __init__(self, parent, title: str, description: str = "", size: str = "420x360"):
+        super().__init__(parent)
+        self.title(title)
+        self.geometry(size)
+        self.minsize(340, 300)
+        style.apply_style(self)
+
+        header = ttk.Frame(self, padding=10)
+        header.pack(fill="x")
+        ttk.Label(header, text=title, font=("Segoe UI", 12, "bold")).pack(anchor="w")
+        if description:
+            ttk.Label(header, text=description, style="Status.TLabel",
+                      wraplength=380, justify="left").pack(anchor="w", pady=(4, 0))
+
+        self.content = ttk.Frame(self, padding=10)
+        self.content.pack(fill="both", expand=True)
+        
+
+class ComputeToolWindow(ToolWindow):
+    """Covers the common case: take the shared workspace data (see
+    data.store), compute a result from it, show/save the result.
+    Subclass and override compute() (and optionally
+    format_result()/save_result()).
+
+    Loading data (file or manual entry) happens only in the main
+    window's I/O bar (see DataBar below) -- this window just shows
+    whether something is loaded and, once computed, the result.
 
     After a successful compute(), "Send result to workspace" becomes
     available -- click it to make this tool's result the input for
     whatever tool you open next (e.g. AFM Geometry -> Analysis).
 
     Class attributes to override as needed:
-        input_label, input_filetypes -- passed to FileInputRow
         output_label -- passed to OutputPanel
     """
 
-    input_label = "Input file"
-    input_filetypes = (("All files", "*.*"),)
     output_label = "Result"
+    default_size = "420x360"
 
-    def __init__(self, parent, title: str, description: str = ""):
-        super().__init__(parent, title=title, description=description)
+    def __init__(self, parent, title: str, description: str = "", size: str | None = None):
+        super().__init__(parent, title=title, description=description, size=size or self.default_size)
         self._last_result = None
+
+        self._build_extra(self.content)
 
         self._data_row = ttk.Frame(self.content)
         self._data_row.pack(fill="x", pady=(0, 8))
@@ -204,43 +211,28 @@ class ComputeToolWindow(ToolWindow):
         self._send_button.pack(side="right", padx=(0, 6))
         self._send_button.configure(state="disabled")
 
-    # -- data row: loaded status OR file picker, never both --------
+    # -- data row: read-only status, no browsing/manual entry here --
 
     def _render_data_row(self) -> None:
         for w in self._data_row.winfo_children():
             w.destroy()
 
+        box = ttk.LabelFrame(self._data_row, text="Data", padding=10)
+        box.pack(fill="x")
         if store.is_loaded():
-            box = ttk.LabelFrame(self._data_row, text="Data", padding=10)
-            box.pack(fill="x")
-            ttk.Label(box, text=f"Using loaded data: {store.label()}", style="Status.TLabel").pack(
-                side="left", fill="x", expand=True
-            )
-            ttk.Button(box, text="Load different file...", command=self._browse).pack(side="right")
+            text = f"Using loaded data: {store.label()}"
         else:
-            row = FileInputRow(self._data_row, label=self.input_label,
-                                filetypes=self.input_filetypes,
-                                on_file_selected=self._on_file_chosen,
-                                on_data_entered=self._on_data_entered)
-            row.pack(fill="x")
+            text = "No data loaded -- load data via the main window."
+        ttk.Label(box, text=text, style="Status.TLabel").pack(anchor="w", fill="x")
 
-    def _browse(self) -> None:
-        path = dialogs.ask_open_file(self, title="Select file", filetypes=self.input_filetypes)
-        if path:
-            self._on_file_chosen(path)
+    # -- extension point ---------------------------------------------
 
-    def _on_file_chosen(self, path: str) -> None:
-        try:
-            data = load_points(path)
-        except Exception as e:
-            dialogs.show_error(self, "Load failed", str(e))
-            return
-        store.set(data, Path(path).name)
-        self._render_data_row()
-        
-    def _on_data_entered(self, data) -> None:
-        store.set(data, "manual entry")
-        self._render_data_row()
+    def _build_extra(self, parent) -> None:
+        """Override to insert tool-specific widgets (e.g. the model
+        formula / parameter fields the custom non-linear fit needs)
+        between the description and the shared data row. No-op by
+        default -- most tools don't need anything here."""
+        pass
 
     # -- compute / result -------------------------------------------
 
@@ -262,7 +254,7 @@ class ComputeToolWindow(ToolWindow):
 
     def run(self) -> None:
         if not store.is_loaded():
-            dialogs.show_error(self, "No data", "Please load a file first.")
+            dialogs.show_error(self, "No data", "Please load data via the main window first.")
             return
         try:
             result = self.compute(store.get())
@@ -281,10 +273,15 @@ class ComputeToolWindow(ToolWindow):
 
 
 class DataBar(ttk.Frame):
-    """Persistent 'Input | Output' bar for the main window. Lets the
-    user load data into the shared workspace (data.store) once and
-    export/clear it -- separate from any individual tool, so tools
-    can be chained without a file round-trip in between."""
+    """Persistent 'Input | Output' bar for the main window, built
+    from two Cells (see Cell above) so it looks like part of the
+    tool grid rather than a separate toolbar -- input stays visually
+    separate from output, just two cells, same as before. Only the
+    Load cell ever shows a status line (the loaded file name); Save
+    doesn't have one anywhere. Lets the user load data into the
+    shared workspace (data.store) once and export/clear it --
+    separate from any individual tool, so tools can be chained
+    without a file round-trip in between."""
 
     def __init__(self, parent, filetypes=(("CSV/text files", "*.csv;*.txt;*.dat"), ("All files", "*.*"))):
         super().__init__(parent, padding=(10, 8))
@@ -293,19 +290,18 @@ class DataBar(ttk.Frame):
         row = ttk.Frame(self)
         row.pack(fill="x")
 
-        in_box = ttk.LabelFrame(row, text="Input", padding=8)
-        in_box.pack(side="left", fill="x", expand=True, padx=(0, 6))
-        ttk.Button(in_box, text="Load...", command=self._load).pack(side="right")
+        self.input_cell = Cell(row, "Load", self._load, status_text=self._status_text())
+        self.input_cell.pack(side="left", padx=(0, 12))
 
-        out_box = ttk.LabelFrame(row, text="Output", padding=8)
-        out_box.pack(side="left", fill="x", expand=True, padx=(6, 0))
-        ttk.Button(out_box, text="Clear", command=self._clear).pack(side="right")
-        ttk.Button(out_box, text="Save...", command=self._save).pack(side="right", padx=(0, 6))
+        self.output_cell = Cell(row, "Save", self._save, extra_button=("Clear", self._clear))
+        self.output_cell.pack(side="right", padx=(12, 0))
 
-        self.status_label = ttk.Label(self, style="Status.TLabel")
-        self.status_label.pack(fill="x", pady=(6, 0))
-
-        self._refresh()
+    def _status_text(self) -> str:
+        if not store.is_loaded():
+            return "no data loaded"
+        data = store.get()
+        n = len(data) if hasattr(data, "__len__") else "?"
+        return f"{store.label()} ({n} row(s))"
 
     def _load(self) -> None:
         path = dialogs.ask_open_file(self, title="Load data", filetypes=self.filetypes)
@@ -336,9 +332,4 @@ class DataBar(ttk.Frame):
         self._refresh()
 
     def _refresh(self) -> None:
-        if store.is_loaded():
-            data = store.get()
-            n = len(data) if hasattr(data, "__len__") else "?"
-            self.status_label.configure(text=f"Loaded: {store.label()} ({n} row(s))")
-        else:
-            self.status_label.configure(text="No data loaded")
+        self.input_cell.set_status(self._status_text())

@@ -42,9 +42,6 @@ def process(points):
 
 
 class ToolWindow(ComputeToolWindow):
-    input_label = "Points file"
-    input_filetypes = (("CSV files", "*.csv"), ("All files", "*.*"))
-
     def __init__(self, parent):
         super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
 
