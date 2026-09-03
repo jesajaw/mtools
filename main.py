@@ -15,7 +15,8 @@ from tkinter import ttk
 import tools
 from core import discover_tools
 from theme import style
-from theme.widgets import DataBar
+
+from theme.widgets import Cell, DataBar
 
 GRID_COLUMNS_MAX = 3
 
@@ -76,10 +77,7 @@ class MainWindow:
 
         for col in range(GRID_COLUMNS_MAX):
             container.columnconfigure(col, weight=1)
-
-        # Utilities (dataio) are fixed, hand-wired entries -- not part
-        # of the dynamically discovered tools/ categories. Rendered
-        # first, separated from the topic categories by a divider.
+        
         row_cursor = 0
 
         grouped: dict[str, list] = {}
@@ -102,18 +100,9 @@ class MainWindow:
         return row_cursor
 
     def _build_cell(self, parent: ttk.Frame, row: int, col: int, entry) -> None:
-        cell = ttk.Frame(parent, padding=8, relief="groove", style="Cell.TFrame")
+        cell = Cell(parent, entry.name, lambda e=entry: e.open_window(self.root),
+                    status_text=entry.description)
         cell.grid(row=row, column=col, padx=6, pady=6, sticky="nsew")
-        cell.pack_propagate(False)
-        cell.configure(width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
-
-        title = ttk.Label(cell, text=entry.name, style="CellTitle.TLabel")
-        title.pack(anchor="w")
-        desc = ttk.Label(cell, text=entry.description, style="Status.TLabel",
-                          wraplength=style.CELL_WIDTH - 20, justify="left")
-        desc.pack(anchor="w", pady=(4, 8), fill="x")
-
-        self._make_cell_clickable(cell, title, desc, entry)
 
     def _make_cell_clickable(self, cell: ttk.Frame, title: ttk.Label, desc: ttk.Label, entry) -> None:
         widgets = (cell, title, desc)

@@ -108,3 +108,47 @@ def solve_3_3_Gauss(A, b):
         x[i] = M[i][3] - sum(M[i][j]*x[j]
                              for j in range(i+1, 3))
     return x
+
+
+def solve_gauss(A, b):
+    """General n x n Gauss-Jordan solve with partial pivoting -- like
+    solve_3_3_Gauss but for any size, needed by fits with more than 3
+    parameters (quadratic surface fit, multivariate regression,
+    the normal equations inside the custom non-linear fit's
+    Levenberg-Marquardt step)."""
+    n = len(A)
+    M = [list(A[i]) + [b[i]] for i in range(n)]
+    for i in range(n):
+        pivot_row = max(range(i, n), key=lambda r: abs(M[r][i]))
+        if abs(M[pivot_row][i]) < 1e-14:
+            raise ValueError("Singular matrix -- fit is underdetermined or the data is degenerate.")
+        M[i], M[pivot_row] = M[pivot_row], M[i]
+        pivot = M[i][i]
+        for j in range(i, n + 1):
+            M[i][j] /= pivot
+        for k in range(n):
+            if k == i:
+                continue
+            factor = M[k][i]
+            if factor == 0:
+                continue
+            for j in range(i, n + 1):
+                M[k][j] -= factor * M[i][j]
+    return [M[i][n] for i in range(n)]
+
+
+def least_squares_fit(design_rows, y):
+    """Ordinary least squares for an arbitrary linear-in-parameters
+    model. design_rows: one row per data point, each row the list of
+    basis-function values [f0(point), f1(point), ...] for that point
+    (a constant 1.0 column gives an intercept). y: the target values,
+    same length as design_rows. Solves the normal equations
+    A^T A p = A^T y via solve_gauss and returns the parameter vector p,
+    in the same order as the basis functions."""
+    n_params = len(design_rows[0])
+    AtA = [
+        [sum(row[i] * row[j] for row in design_rows) for j in range(n_params)]
+        for i in range(n_params)
+    ]
+    Aty = [sum(row[i] * yi for row, yi in zip(design_rows, y)) for i in range(n_params)]
+    return solve_gauss(AtA, Aty)
