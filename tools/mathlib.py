@@ -1,17 +1,18 @@
+import math
+
+
 def split_points(points):
     try:
-      dimension = len(points[0])
+        dimension = len(points[0])
     except TypeError:
-         return len(points), 1, points
-    return (len(points), 
-            dimension,
-            [float(p[0])
-             for p in points],
-            [float(p[1])
-             for p in points] if dimension > 1 else None,
-            [float(p[2])
-             for p in points] if dimension > 2 else None
-            )
+        return len(points), 1, [float(p) for p in points], None, None
+    return (
+        len(points),
+        dimension,
+        [float(p[0]) for p in points],
+        [float(p[1]) for p in points] if dimension > 1 else None,
+        [float(p[2]) for p in points] if dimension > 2 else None,
+    )
 
 def mean(values_list):
     return tuple(
@@ -35,9 +36,15 @@ def square(values):
 def square_root (values):
     return [v**0.5 for v in values]
 
+def log(values):
+    return [math.log(v) for v in values]
+
 def distance(p0, p1):
-    return square_root(tuple(square(p0[i]-p1[i])) for i in range(len(p0)))
-    return square_root(sum(square((p0[i] - p1[i]) for i in range(len(p0)))))
+    return square_root(
+        sum(
+            (p0[i] - p1[i]) ** 2
+                for i in range(len(p0))
+            ))
 
 def shift(values_list, shiftvalue_list):
     return [
@@ -64,27 +71,22 @@ def normal_equation_vector(x, y):
         sum_list(products(square(x), y))
         ]
 
-def covariance(a, b):
-    return sum_list(
-        list(
-            map(
-                lambda i: a[i]*b[i],
-                range(len(a))))
-                )
+def scatter(a, b):
+    return sum(
+        a[i] * b[i]
+        for i in range(len(a))
+        )
 
 def power_iteration(C, iterations=100):
-    b = [1, 1, 1]
+    b = [1.0, 1.0, 1.0]
     for _ in range(iterations):
         b_new = [
             C[0][0]*b[0] + C[0][1]*b[1] + C[0][2]*b[2],
             C[1][0]*b[0] + C[1][1]*b[1] + C[1][2]*b[2],
-            C[2][0]*b[0] + C[2][1]*b[1] + C[2][2]*b[2]
+            C[2][0]*b[0] + C[2][1]*b[1] + C[2][2]*b[2],
         ]
-        norm = (b_new[0]**2 + b_new[1]**2 + b_new[2]**2)**0.5    
-    return [
-        b_new[i]/norm
-        for i in range(3)
-        ]
+        norm = (b_new[0]**2 + b_new[1]**2 + b_new[2]**2) ** 0.5
+    return [v / norm for v in b_new]
 
 def solve_3_3_Gauss(A, b):
     M = [

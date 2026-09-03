@@ -22,21 +22,29 @@ _DELIMITER_SPLITTERS = [
 
 def load_points(path: str):
     """Reads points from a file, format inferred from the extension.
-    Currently supports .csv/.txt/.dat with an auto-detected delimiter
-    (semicolon, tab, comma, or whitespace) -- German-style decimal
-    commas (e.g. "1,23") are also accepted. Header/label rows are
-    skipped automatically (any row that doesn't parse as all-numeric
-    is ignored). Returns a flat list of floats for a single column,
-    or a list of (x, y[, z]) tuples for 2 or 3 columns -- the format
-    mathlib.split_points() expects."""
+    Currently supports .csv/.txt/.dat -- parsing itself is handled by
+    parse_points() below, so file input and manual text entry (see
+    theme.widgets.FileInputRow) go through identical logic."""
     ext = Path(path).suffix.lower()
     if ext not in (".csv", ".txt", ".dat"):
         raise ValueError(f"Unsupported file format: '{ext or '(none)'}'.")
 
     with open(path, encoding="utf-8-sig") as f:
-        raw_lines = [line.rstrip("\r\n") for line in f if line.strip()]
-    if not raw_lines:
+        text = f.read()
+    if not text.strip():
         raise ValueError("File is empty.")
+    return parse_points(text)
+
+def parse_points(text: str):
+    """Parses points from raw text, auto-detected delimiter
+    (semicolon, tab, comma, or whitespace) -- German-style decimal
+    commas (e.g. "1,23") are also accepted. Non-numeric lines
+    (headers/labels) are skipped automatically. Returns a flat list
+    of floats for a single column, or a list of (x, y[, z]) tuples
+    for 2 or 3 columns -- the format mathlib.split_points() expects."""
+    raw_lines = [line.rstrip("\r\n") for line in text.splitlines() if line.strip()]
+    if not raw_lines:
+        raise ValueError("No data given.")
 
     best = None
     for splitter in _DELIMITER_SPLITTERS:
@@ -46,10 +54,10 @@ def load_points(path: str):
         if best is None or len(rows[0]) > len(best[0]):
             best = rows
         if len(rows[0]) > 1:
-            break  # good enough: a delimiter that actually splits into columns
+            break
 
     if best is None:
-        raise ValueError("Could not determine a consistent column structure -- check the file's formatting.")
+        raise ValueError("Could not determine a consistent column structure -- check the formatting.")
 
     width = len(best[0])
     if width not in (1, 2, 3):

@@ -26,7 +26,7 @@ from tkinter import ttk, filedialog
 from pathlib import Path
 
 from data import store
-from data.loaders import load_points
+from data.loaders import load_points, parse_points
 from data.savers import save_points_csv
 
 from . import style, dialogs
@@ -56,23 +56,36 @@ class ToolWindow(tk.Toplevel):
 
 class FileInputRow(ttk.Frame):
     """A labeled row for picking an input file (e.g. measurements or
-    points), with a 'Browse...' button. Calls on_file_selected(path)
-    whenever a file is chosen. self.path holds the current selection."""
+    points), with a 'Browse...' button, plus a manual-entry text box
+    below it for pasting/typing points when no file is at hand --
+    both live in the same box, no separate input widget. Calls
+    on_file_selected(path) when a file is chosen, or on_data_entered(data)
+    when manually entered text is parsed and confirmed. self.path
+    holds the current file selection (stays None for manual entry)."""
 
     def __init__(self, parent, label: str = "Input file", on_file_selected=None,
-                 filetypes=(("All files", "*.*"),)):
+                 on_data_entered=None, filetypes=(("All files", "*.*"),)):
         super().__init__(parent)
         self.on_file_selected = on_file_selected
+        self.on_data_entered = on_data_entered
         self.filetypes = filetypes
         self.path: str | None = None
 
         box = ttk.LabelFrame(self, text=label, padding=10)
         box.pack(fill="x")
 
-        self.path_label = ttk.Label(box, text="no file selected", style="Status.TLabel")
+        file_row = ttk.Frame(box)
+        file_row.pack(fill="x")
+        self.path_label = ttk.Label(file_row, text="no file selected", style="Status.TLabel")
         self.path_label.pack(side="left", fill="x", expand=True)
+        ttk.Button(file_row, text="Browse...", command=self._browse).pack(side="right")
 
-        ttk.Button(box, text="Browse...", command=self._browse).pack(side="right")
+        ttk.Label(box, text='...or enter points manually (one per line, e.g. "x,y"):',
+                  style="Status.TLabel").pack(anchor="w", pady=(8, 2))
+        self.manual_text = tk.Text(box, height=4, bg=style.COLOR_BG_LIGHT, fg=style.COLOR_FG,
+                                    insertbackground=style.COLOR_FG, relief="flat")
+        self.manual_text.pack(fill="x")
+        ttk.Button(box, text="Use this data", command=self._use_manual).pack(anchor="e", pady=(6, 0))
 
     def _browse(self) -> None:
         path = dialogs.ask_open_file(self, title="Select file", filetypes=self.filetypes)
@@ -82,6 +95,19 @@ class FileInputRow(ttk.Frame):
         self.path_label.config(text=path)
         if self.on_file_selected:
             self.on_file_selected(path)
+
+    def _use_manual(self) -> None:
+        text = self.manual_text.get("1.0", "end-1c")
+        if not text.strip():
+            dialogs.show_error(self, "No data", "Please enter at least one point.")
+            return
+        try:
+            data = parse_points(text)
+        except Exception as e:
+            dialogs.show_error(self, "Parse failed", str(e))
+            return
+        if self.on_data_entered:
+            self.on_data_entered(data)
 
 
 class OutputPanel(ttk.Frame):
@@ -193,7 +219,9 @@ class ComputeToolWindow(ToolWindow):
             ttk.Button(box, text="Load different file...", command=self._browse).pack(side="right")
         else:
             row = FileInputRow(self._data_row, label=self.input_label,
-                                filetypes=self.input_filetypes, on_file_selected=self._on_file_chosen)
+                                filetypes=self.input_filetypes,
+                                on_file_selected=self._on_file_chosen,
+                                on_data_entered=self._on_data_entered)
             row.pack(fill="x")
 
     def _browse(self) -> None:
@@ -208,6 +236,10 @@ class ComputeToolWindow(ToolWindow):
             dialogs.show_error(self, "Load failed", str(e))
             return
         store.set(data, Path(path).name)
+        self._render_data_row()
+        
+    def _on_data_entered(self, data) -> None:
+        store.set(data, "manual entry")
         self._render_data_row()
 
     # -- compute / result -------------------------------------------
