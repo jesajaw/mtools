@@ -22,7 +22,7 @@ from data.savers import save_points_csv
 from theme import style, dialogs
 from theme.widgets import Cell
 
-GRID_COLUMNS_MAX = 3
+GRID_COLUMNS_MAX = 4
 
 
 class MainWindow:
@@ -42,10 +42,10 @@ class MainWindow:
         row = ttk.Frame(self.root, padding=(10, 8))
         row.pack(fill="x")
 
-        self.input_cell = Cell(row, "Load", self._load, status_text=self._io_status_text())
+        self.input_cell = Cell(row, "Load", self._load, status_text=self._io_status_text(), width=(GRID_COLUMNS_MAX * (style.CELL_WIDTH + 12) + 40)/2, height=70)
         self.input_cell.pack(side="left", padx=(0, 12))
 
-        output_cell = Cell(row, "Save", self._save, extra_button=("Clear", self._clear))
+        output_cell = Cell(row, "Save", self._save, extra_button=("Clear", self._clear), width=(GRID_COLUMNS_MAX * (style.CELL_WIDTH + 12) + 40)/2, height=70)
         output_cell.pack(side="right", padx=(12, 0))
 
         ttk.Separator(self.root, orient="horizontal").pack(fill="x", padx=10, pady=(10, 0))
@@ -85,8 +85,9 @@ class MainWindow:
         save_points_csv(path, store.get())
 
     def _clear(self) -> None:
-        store.clear()
-        self.input_cell.set_status(self._io_status_text())
+        if dialogs.ask_yes_no(self.root, title="Clear Data", message="Are you sure you want to clear all data?"):
+            store.clear()
+            self.input_cell.set_status(self._io_status_text())
 
 
     def _build_grid(self) -> None:

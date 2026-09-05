@@ -47,12 +47,12 @@ class Cell(ttk.Frame):
     secondary action that shouldn't be one accidental cell-click
     away from Save)."""
 
-    def __init__(self, parent, title: str, on_click=None, status_text: str | None = None,
-                 wraplength: int = style.CELL_WIDTH - 20, extra_button=None):
+    def __init__(self, parent, title: str, on_click=None, status_text: str | None = None, width: int = style.CELL_WIDTH, height: int = style.CELL_HEIGHT, extra_button=None):
         super().__init__(parent, padding=8, relief="groove", style="Cell.TFrame")
+        wraplength = width - 20
         self.on_click = on_click
         self.pack_propagate(False)
-        self.configure(width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
+        self.configure(width=width, height=height)
 
         self.title_label = ttk.Label(self, text=title, style="CellTitle.TLabel")
         self.title_label.pack(anchor="w")
