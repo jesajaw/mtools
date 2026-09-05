@@ -6,6 +6,7 @@ To add a new tool: create a new folder under tools/ with an __init__.py (TOOL_NA
 
 import sys
 from pathlib import Path
+from tkinter import filedialog
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -14,9 +15,12 @@ from tkinter import ttk
 
 import tools
 from core import discover_tools
-from theme import style
 
-from theme.widgets import Cell, DataBar
+from data import store
+from data.loaders import load_points
+from data.savers import save_points_csv
+from theme import style, dialogs
+from theme.widgets import Cell
 
 GRID_COLUMNS_MAX = 3
 
@@ -29,19 +33,61 @@ class MainWindow:
         style.apply_style(self.root)
 
         self.tools = discover_tools(tools)
-        self._build_header()
         self._build_data_bar()
         self._build_grid()
         self._size_to_content()
 
-    def _build_header(self) -> None:
-        header = ttk.Frame(self.root, padding=10)
-        header.pack(fill="x")
-        ttk.Label(header, text="Select a tool", font=("Segoe UI", 12, "bold")).pack(anchor="w")
 
     def _build_data_bar(self) -> None:
-        DataBar(self.root).pack(fill="x", padx=10)
+        row = ttk.Frame(self.root, padding=(10, 8))
+        row.pack(fill="x")
+
+        self.input_cell = Cell(row, "Load", self._load, status_text=self._io_status_text())
+        self.input_cell.pack(side="left", padx=(0, 12))
+
+        output_cell = Cell(row, "Save", self._save, extra_button=("Clear", self._clear))
+        output_cell.pack(side="right", padx=(12, 0))
+
         ttk.Separator(self.root, orient="horizontal").pack(fill="x", padx=10, pady=(10, 0))
+
+    def _io_status_text(self) -> str:
+        if not store.is_loaded():
+            return "no data loaded"
+        data = store.get()
+        n = len(data) if hasattr(data, "__len__") else "?"
+        return f"{store.label()} ({n} row(s))"
+
+    def _load(self) -> None:
+        path = dialogs.ask_open_file(
+            self.root, title="Load data",
+            filetypes=(("CSV/text files", "*.csv;*.txt;*.dat"), ("All files", "*.*")),
+        )
+        if not path:
+            return
+        try:
+            data = load_points(path)
+        except Exception as e:
+            dialogs.show_error(self.root, "Load failed", str(e))
+            return
+        store.set(data, Path(path).name)
+        self.input_cell.set_status(self._io_status_text())
+
+    def _save(self) -> None:
+        if not store.is_loaded():
+            dialogs.show_error(self.root, "Nothing to save", "No data currently loaded.")
+            return
+        path = filedialog.asksaveasfilename(
+            parent=self.root, defaultextension=".csv",
+            filetypes=(("CSV files", "*.csv"), ("All files", "*.*")),
+        )
+        if not path:
+            return
+        save_points_csv(path, store.get())
+
+    def _clear(self) -> None:
+        store.clear()
+        self.input_cell.set_status(self._io_status_text())
+
 
     def _build_grid(self) -> None:
         outer = ttk.Frame(self.root)
