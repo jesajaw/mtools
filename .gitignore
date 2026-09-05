@@ -29,13 +29,13 @@ Desktop.ini
 .coverage
 htmlcov/
 
-# Build & Packaging (falls Executables oder Wheels gebaut werden)
+# Build & Packaging
 build/
 dist/
 *.spec
 *.egg-info/
 
-# Lokale Daten & Exporte (Messdaten / Fits nicht im Git tracken)
+# Lokale Daten & Exporte
 *.csv
 *.xlsx
 *.dat
