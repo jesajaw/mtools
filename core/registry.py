@@ -63,6 +63,9 @@ def _discover_tools_in_category(category_module: ModuleType) -> list[ToolEntry]:
             traceback.print_exc()
             continue
 
+        if category_name == "example":
+            continue
+
         missing = [a for a in REQUIRED_ATTRS if not hasattr(module, a)]
         if missing:
             print(f"[mtools] Skipping tool module '{tool_info.name}', missing attributes: {missing}")
