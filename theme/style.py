@@ -9,6 +9,7 @@ apply_style() once on root/Toplevel and shares the same style names
 """
 
 import sys
+from dataclasses import dataclass
 
 # ------------------------------------------------------------
 # Color schemes (as before: several palettes, one active)
@@ -39,12 +40,60 @@ COLOR_DARK = _active["ACCENT_DARK"]
 COLOR_STATUS_TEXT = _active["STATUS_TEXT"]
 
 # ------------------------------------------------------------
+# Font schemes (same idea as color schemes: named presets, one active)
+# ------------------------------------------------------------
+_FONT_SCHEMES = {
+    "segoe": dict(UI="Segoe UI", MONO="Consolas", SIZE_NORMAL=9, SIZE_HEADER=10, SIZE_TITLE=12),
+    "system": dict(UI="TkDefaultFont", MONO="TkFixedFont", SIZE_NORMAL=9, SIZE_HEADER=10, SIZE_TITLE=12),
+}
+
+FONT_SCHEME = "segoe"  # switch font preset here
+
+_active_font = _FONT_SCHEMES[FONT_SCHEME]
+FONT_UI = _active_font["UI"]
+FONT_MONO = _active_font["MONO"]
+FONT_SIZE_NORMAL = _active_font["SIZE_NORMAL"]
+FONT_SIZE_HEADER = _active_font["SIZE_HEADER"]
+FONT_SIZE_TITLE = _active_font["SIZE_TITLE"]
+
+# Ready-to-use (family, size[, weight]) tuples for style.configure() calls and any plain tk/ttk widget's font= option.
+FONT_NORMAL = (FONT_UI, FONT_SIZE_NORMAL)
+FONT_BOLD = (FONT_UI, FONT_SIZE_NORMAL, "bold")
+FONT_HEADER = (FONT_UI, FONT_SIZE_HEADER, "bold")
+FONT_TITLE = (FONT_UI, FONT_SIZE_TITLE, "bold")
+FONT_MONO_NORMAL = (FONT_MONO, FONT_SIZE_NORMAL)
+
+# ------------------------------------------------------------
 # Layout constants (cell grid, as before)
 # ------------------------------------------------------------
 
 CELL_WIDTH = 260
 CELL_HEIGHT = 110
 STATUS_LABEL_CHARS = 32
+
+
+@dataclass(frozen=True)
+class Layout:
+    """Every magic number that goes into sizing/positioning the main
+    window's grid, collected here so each one is defined exactly
+    once instead of being recomputed inline at each call site (see
+    main.py's MainWindow, which reads these instead of hardcoding
+    its own copies)."""
+
+    grid_columns: int = 4
+    cell_gap: int = 12
+    outer_padding: int = 40
+    io_cell_height: int = 70
+    category_header_height: int = 34
+    max_height_fraction: float = 0.8
+
+    @property
+    def grid_width(self) -> int:
+        """Total width of the tool grid: N columns of CELL_WIDTH, the gap between them, plus outer padding."""
+        return self.grid_columns * (CELL_WIDTH + self.cell_gap) + self.outer_padding
+
+
+LAYOUT = Layout()
 
 
 def apply_style(root) -> None:
@@ -59,7 +108,7 @@ def apply_style(root) -> None:
     style = ttk.Style(root)
     style.theme_use("clam")
 
-    style.configure(".", background=COLOR_BG, foreground=COLOR_FG, font=("Segoe UI", 9))
+    style.configure(".", background=COLOR_BG, foreground=COLOR_FG, font=FONT_NORMAL)
     style.configure("TFrame", background=COLOR_BG)
     style.configure("TLabelframe", background=COLOR_BG, foreground=COLOR_FG, bordercolor=COLOR_DARK)
     style.configure("TLabelframe.Label", background=COLOR_BG, foreground=COLOR)
@@ -80,15 +129,15 @@ def apply_style(root) -> None:
     style.map("Accent.TButton", background=[("active", COLOR)])
 
     style.configure("Cell.TFrame", background=COLOR_BG_LIGHT, bordercolor=COLOR_DARK)
-    style.configure("Status.TLabel", background=COLOR_BG_LIGHT, foreground=COLOR_STATUS_TEXT, font=("Consolas", 9))
-    style.configure("CellTitle.TLabel", background=COLOR_BG_LIGHT, foreground=COLOR_FG, font=("Segoe UI", 9, "bold"))
+    style.configure("Status.TLabel", background=COLOR_BG_LIGHT, foreground=COLOR_STATUS_TEXT, font=FONT_MONO_NORMAL)
+    style.configure("CellTitle.TLabel", background=COLOR_BG_LIGHT, foreground=COLOR_FG, font=FONT_BOLD)
 
     # hover state for clickable cells (see main.py MainWindow._build_cell)
     style.configure("CellHover.TFrame", background=COLOR_DARK, bordercolor=COLOR)
-    style.configure("StatusHover.TLabel", background=COLOR_DARK, foreground=COLOR_STATUS_TEXT, font=("Consolas", 9))
-    style.configure("CellTitleHover.TLabel", background=COLOR_DARK, foreground=COLOR_FG, font=("Segoe UI", 9, "bold"))
+    style.configure("StatusHover.TLabel", background=COLOR_DARK, foreground=COLOR_STATUS_TEXT, font=FONT_MONO_NORMAL)
+    style.configure("CellTitleHover.TLabel", background=COLOR_DARK, foreground=COLOR_FG, font=FONT_BOLD)
 
-    style.configure("CategoryHeader.TLabel", background=COLOR_BG, foreground=COLOR, font=("Segoe UI", 10, "bold"))
+    style.configure("CategoryHeader.TLabel", background=COLOR_BG, foreground=COLOR, font=FONT_HEADER)
 
 
 # ------------------------------------------------------------

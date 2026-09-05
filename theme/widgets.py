@@ -111,7 +111,7 @@ class ToolWindow(tk.Toplevel):
 
         header = ttk.Frame(self, padding=10)
         header.pack(fill="x")
-        ttk.Label(header, text=title, font=("Segoe UI", 12, "bold")).pack(anchor="w")
+        ttk.Label(header, text=title, font=style.FONT_TITLE).pack(anchor="w")
         if description:
             ttk.Label(header, text=description, style="Status.TLabel",
                       wraplength=380, justify="left").pack(anchor="w", pady=(4, 0))
