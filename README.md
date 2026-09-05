@@ -47,41 +47,39 @@ Status: **done** (real computation) / **placeholder** (GUI wired up, `compute()`
 
 ```text
 mtools/
-├── main.py                     # Main launcher GUI (Input/Output bar + category-grouped tool grid)
-├── requirements.txt            # Python dependencies (stdlib only, currently)
+├── main.py        # Main launcher GUI (Input/Output bar + category-grouped tool grid)
+├── requirements.txt        # Python dependencies (stdlib only, currently)
 ├── LICENSE
 ├── README.md
 ├── .gitignore
 ├── core/
 │   ├── __init__.py
-│   ├── registry.py             # Scans tools/<category>/<tool>.py, imports & registers modules
-│   └── tool_base.py            # ToolEntry contract / interface for tools
+│   ├── registry.py        # Scans tools/<category>/<tool>.py, imports & registers modules
+│   └── tool_base.py        # ToolEntry contract / interface for tools
 ├── data/
 │   ├── __init__.py
-│   ├── loaders.py              # File -> parsed data (auto-detects delimiter, decimal comma, etc.)
-│   ├── savers.py                # Parsed data -> file (clean CSV export)
-│   └── store.py                 # The shared in-memory workspace ("current data" for the whole app)
+│   ├── loaders.py        # File -> parsed data (auto-detects delimiter, decimal comma, etc.)
+│   ├── savers.py        # Parsed data -> file (clean CSV export)
+│   └── store.py        # The shared in-memory workspace ("current data" for the whole app)
 ├── theme/
 │   ├── __init__.py
-│   ├── dialogs.py               # Themed popups (ThemedDialog, show_error, ask_yes_no, ask_open_file, ...)
-│   ├── style.py                  # Color/font schemes, the Layout dataclass, ttk styling, DPI/dark-titlebar (Windows)
-│   └── widgets.py                # Reusable building blocks: Cell, ToolWindow, OutputPanel, ComputeToolWindow
+│   ├── dialogs.py        # Themed popups (ThemedDialog, show_error, ask_yes_no, ask_open_file, ...)
+│   ├── style.py        # Color/font schemes, the Layout dataclass, ttk styling, DPI/dark-titlebar (Windows)
+│   └── widgets.py        # Reusable building blocks: Cell, ToolWindow, OutputPanel, ComputeToolWindow
 └── tools/
     ├── __init__.py
-    ├── mathlib.py               # Shared math routines, used by tools via `import tools.mathlib`
+    ├── mathlib.py        # Shared math routines, used by tools via `import tools.mathlib`
     ├── example/
-    │   └── template.py          # Copy this to start a new tool
-    ├── fitting/
+    │   └── template.py        # Copy this to start a new tool
+    ├── fitting/        # Regular Structure
     │   ├── __init__.py
     │   ├── linear.py
     │   ├── polynomial.py
     │   └── ...
-    └── <category>/<tool>.py     # One category folder per topic, see Tools above
+    └── <category>/<tool>.py        # One category folder per topic, see Tools above
 ```
 
-`data/` is deliberately NOT under `tools/`: it's shared infrastructure
-(imported by tools, not discovered as a topic), and deliberately not
-named `io` either -- that would shadow Python's stdlib `io` module.
+`data/` is deliberately NOT under `tools/`: it's shared infrastructure (imported by tools, not discovered as a topic), and deliberately not named `io` either -- that would shadow Python's stdlib `io` module.
 
 ## Running
 
