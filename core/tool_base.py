@@ -1,14 +1,12 @@
 """
-Interface that every tool module must provide so main.py can find and
-display it automatically. Tools live in category subfolders under
-tools/, one plain .py file per tool (e.g. tools/regression/linear.py).
-Category folders themselves just need an __init__.py to be a package
--- no tool metadata there.
+Interface that every tool module must provide so main can find and display it automatically.
+Tools live in category subfolders under tools/, one plain .py file per tool.
+Category folders themselves just need an __init__.py to be a package -- no tool metadata there.
 
 A tool module needs:
 
-    TOOL_NAME: str            # display name in the main window
-    TOOL_DESCRIPTION: str     # one or two sentences, plain text, no tooltips
+    TOOL_NAME: str            # display name in main window
+    TOOL_DESCRIPTION: str     # descitopn in main window
     def open_window(parent) -> None
         # opens this tool's 2nd window (Toplevel)
 

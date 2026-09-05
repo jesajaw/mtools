@@ -1,10 +1,6 @@
 """
-Scans tools/ two levels deep: category subfolders (e.g.
-tools/regression/) and, inside each, individual tool modules (e.g.
-linear.py). main.py does not need to know any category or tool by
-name -- adding a new tool means adding a module to an existing
-category folder, or a new category folder plus module, following the
-schema in tool_base.py. No edit to main.py required.
+Scans tools/ two levels deep: category subfolders and individual tool modules
+main does not need to know any category or tool by name -- adding a new tool means adding a module to an existing category folder, or a new category folder plus module, following the schema in tool_base.py
 """
 
 import importlib, os, pkgutil, sys, traceback
@@ -16,10 +12,8 @@ REQUIRED_ATTRS = ("TOOL_NAME", "TOOL_DESCRIPTION", "open_window")
 
 def discover_tools(tools_package: ModuleType) -> list[ToolEntry]:
     """
-    Iterates over category sub-packages of tools_package, then over
-    the tool modules inside each. Categories or tools that fail to
-    import or are missing attributes are skipped and logged to the
-    console instead of crashing main.py.
+    Iterates over category sub-packages of tools_package, then over the tool modules inside each
+    Categories or tools that fail to import or are missing attributes are skipped and logged
     """
     _ensure_project_root_on_path(tools_package)
     entries: list[ToolEntry] = []
@@ -41,12 +35,11 @@ def discover_tools(tools_package: ModuleType) -> list[ToolEntry]:
 
 
 def _ensure_project_root_on_path(tools_package: ModuleType) -> None:
-    """Tool modules (e.g. tools/regression/linear.py) import shared,
-    project-root-level modules like mathlib.py via a plain `import
-    mathlib`. That only resolves if the project root is on sys.path --
-    guaranteed when running `python main.py` from the project root,
-    but not necessarily when some other file is run/debugged directly.
-    This makes discovery work either way."""
+    """
+    Tool modules import shared modules at the project level, such as `mathlib.py`, using a simple command: `import mathlib`.
+    This works only if the project directory is in `sys.path`—which is guaranteed when `python main.py` is run from the project directory, but not necessarily when another file is run or debugged directly.
+    As a result, detection works in both cases.
+    """
     tools_dir = os.path.dirname(os.path.abspath(tools_package.__file__))
     project_root = os.path.dirname(tools_dir)
     if project_root not in sys.path:

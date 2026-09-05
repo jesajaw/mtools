@@ -16,9 +16,7 @@ from tkinter import ttk
 import tools
 from core import discover_tools
 
-from data import store
-from data.loaders import load_points
-from data.savers import save_points_csv
+from data import loaders, savers, store
 from theme import style, dialogs
 from theme.widgets import Cell
 
@@ -64,7 +62,7 @@ class MainWindow:
         if not path:
             return
         try:
-            data = load_points(path)
+            data = loaders.load_points(path)
         except Exception as e:
             dialogs.show_error(self.root, "Load failed", str(e))
             return
@@ -78,7 +76,7 @@ class MainWindow:
         path = filedialog.asksaveasfilename(parent=self.root, defaultextension=".csv", filetypes=(("CSV files", "*.csv"), ("All files", "*.*")))
         if not path:
             return
-        save_points_csv(path, store.get())
+        savers.save_points_csv(path, store.get())
 
     def _clear(self) -> None:
         if dialogs.ask_yes_no(self.root, title="Clear Data", message="Are you sure you want to clear all data?"):

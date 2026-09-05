@@ -1,18 +1,10 @@
 """
-Shared file loading for all tools. Central place for input-format
-handling so individual tool categories don't each reimplement CSV
-parsing -- adding a new format is a one-time job here.
-
-Not a tool itself (no TOOL_NAME/TOOL_DESCRIPTION/open_window) --
-core.registry only requires those on modules it lists as tools;
-importing this module from elsewhere is fine either way.
+Shared file loading for all tools -- central place for input-format handling so individual tool categories don't each reimplement parsing.
 """
 
 from pathlib import Path
 
-# Tried in this order; whitespace (last) also collapses runs of
-# spaces/tabs, so ragged manually-aligned columns still parse.
-_DELIMITER_SPLITTERS = [
+_DELIMITER_SPLITTERS = [ # todo... this is bs
     lambda line: line.split(";"),
     lambda line: line.split("\t"),
     lambda line: line.split(","),
@@ -21,7 +13,8 @@ _DELIMITER_SPLITTERS = [
 
 
 def load_points(path: str):
-    """Reads points from a file, format inferred from the extension.
+    """
+    Reads points from a file, format inferred from the extension.
     Currently supports .csv/.txt/.dat -- parsing itself is handled by
     parse_points() below, so file input and manual text entry (see
     theme.widgets.FileInputRow) go through identical logic."""
