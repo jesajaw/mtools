@@ -52,8 +52,7 @@ def shift(values_list, shiftvalue_list):
             map(
                 lambda v: v - s, values
                 ))for values, s in zip(
-                    values_list, shiftvalue_list)
-                    ]
+                    values_list, shiftvalue_list)]
 
 def normal_matrix(values):
     values2 = square(values)
@@ -85,8 +84,8 @@ def power_iteration(C, iterations=100):
             C[1][0]*b[0] + C[1][1]*b[1] + C[1][2]*b[2],
             C[2][0]*b[0] + C[2][1]*b[1] + C[2][2]*b[2],
         ]
-        norm = (b_new[0]**2 + b_new[1]**2 + b_new[2]**2) ** 0.5
-    return [v / norm for v in b_new]
+    return [v / square_root((b_new[0]**2 + b_new[1]**2 + b_new[2]**2))
+            for v in b_new]
 
 def solve_3_3_Gauss(A, b):
     M = [
