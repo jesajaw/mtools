@@ -3,8 +3,8 @@
 A small tkinter framework around a collection of regression/analysis
 and mathematical scripts. Instead of calling each script separately,
 `main.py` opens a selection window; picking a tool opens that tool's
-own window with its inputs, outputs, and (where needed) file
-selection. There will be more tools over time.
+own window with its inputs and outputs. There will be more tools over
+time.
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -12,19 +12,17 @@ selection. There will be more tools over time.
 ## Features
 
 * **Central Launchpad (`main.py`):** Single entry point dashboard GUI for all integrated tools, grouped by category.
-* **Shared Workspace (`data/store.py`):** One "current data" slot for the whole app. Load a file once via the Input/Output bar at the top, and every tool uses it automatically -- no per-tool file picker as long as something's loaded. A tool's result can be sent back to the workspace ("Send result to workspace"), so tools chain: e.g. run AFM Geometry, then feed its output straight into an analysis tool.
+* **Shared Workspace (`data/store.py`):** One "current data" slot for the whole app, loaded/saved/cleared exclusively via the Input/Output bar at the top of the main window -- every tool window just reads whatever's currently there, no per-tool file picker. A tool's result can be sent back to the workspace ("Send result to workspace"), so tools chain: e.g. run AFM Geometry, then feed its output straight into an analysis tool.
 * **Dynamic Discovery (`core/registry.py`):** Automatically scans and registers tools from `tools/<category>/<tool>.py` -- add a module, it shows up on next start.
 * **Modular Architecture:** Strict separation between computational logic and GUI code; shared GUI building blocks live in `theme/widgets.py`.
-* **Themes:** Centralized palette configuration (`dark_purple`, `dark_blue`, `black_white`), Windows dark-titlebar/DPI-awareness handling included.
+* **Themes:** Centralized color palettes (`dark_purple`, `dark_blue`, `black_white`) and font presets (`segoe`, `system`) in `theme/style.py`, Windows dark-titlebar/DPI-awareness handling included.
 
 ## Tools
 
 Status: **done** (real computation) / **placeholder** (GUI wired up, `compute()` not implemented yet).
 
 * **fitting/** -- regression & curve fitting
-  * Linear -- done
-  * Polynomial (quadratic, y = c0 + c1x + c2x^2) -- done
-  * Exponential, Logarithmic, Quadratic, Multivariate, Custom Non-linear Fit -- placeholder
+  * Linear, Polynomial (2D quadratic + 3D quadratic surface), Quadratic, Exponential, Logarithmic, Multivariate, Custom Non-linear Fit -- done
 * **afm/** -- AFM data processing
   * Geometry (rotate/mirror/crop/level), Filters & Defects, Roughness (ISO Ra/Rq), Grain Analysis -- placeholder
 * **ode/**, **pde/** -- differential equation solvers -- placeholder
@@ -55,22 +53,26 @@ mtools/
 ├── README.md
 ├── .gitignore
 ├── core/
+│   ├── __init__.py
 │   ├── registry.py             # Scans tools/<category>/<tool>.py, imports & registers modules
 │   └── tool_base.py            # ToolEntry contract / interface for tools
 ├── data/
+│   ├── __init__.py
 │   ├── loaders.py              # File -> parsed data (auto-detects delimiter, decimal comma, etc.)
 │   ├── savers.py                # Parsed data -> file (clean CSV export)
 │   └── store.py                 # The shared in-memory workspace ("current data" for the whole app)
 ├── theme/
-│   ├── dialogs.py               # Themed popups (ThemedDialog, show_error, ask_open_file, ...)
-│   ├── style.py                  # Palette themes, ttk styling, DPI/dark-titlebar (Windows)
-│   └── widgets.py                # Reusable building blocks: ToolWindow, FileInputRow, OutputPanel,
-│                                  #   ComputeToolWindow (workspace-aware), DataBar (the top I/O bar)
+│   ├── __init__.py
+│   ├── dialogs.py               # Themed popups (ThemedDialog, show_error, ask_yes_no, ask_open_file, ...)
+│   ├── style.py                  # Color/font schemes, the Layout dataclass, ttk styling, DPI/dark-titlebar (Windows)
+│   └── widgets.py                # Reusable building blocks: Cell, ToolWindow, OutputPanel, ComputeToolWindow
 └── tools/
+    ├── __init__.py
     ├── mathlib.py               # Shared math routines, used by tools via `import tools.mathlib`
     ├── example/
     │   └── template.py          # Copy this to start a new tool
     ├── fitting/
+    │   ├── __init__.py
     │   ├── linear.py
     │   ├── polynomial.py
     │   └── ...
@@ -91,31 +93,19 @@ python main.py
 
 ## The shared workspace
 
-The bar at the top of the main window ("Input" / "Output") holds one
-data set at a time -- the app-wide workspace (`data/store.py`):
+The bar at the top of the main window ("Load" / "Save", with "Clear" tucked into Save's corner) holds one data set at a time -- the app-wide workspace (`data/store.py`):
 
-* **Load...** -- pick a file, parsed via `data/loaders.py` (delimiter
-  and decimal separator auto-detected; header/label rows are skipped
-  automatically).
-* **Save...** / **Clear** -- export the current workspace contents as
-  clean CSV, or drop them.
-* Any tool built on `ComputeToolWindow` picks this up automatically:
-  if something's loaded, the tool shows "Using loaded data: ..." and
-  a "Load different file..." option instead of its own file picker.
-  If nothing's loaded yet, the tool shows a file picker itself --
-  picking a file there also fills the shared workspace.
-* After a tool computes a result, **"Send result to workspace"**
-  makes that result the new workspace contents -- so the next tool
-  you open picks up right where this one left off (e.g. AFM Geometry
-  correction -> straight into an analysis tool, no manual
-  save/reload in between).
+* **Load** -- pick a file, parsed via `data/loaders.py` (delimiter and decimal separator auto-detected; header/label rows are skipped automatically).
+* **Save** / **Clear** -- export the current workspace contents as clean CSV, or drop them (Clear asks for confirmation first).
+* Every tool window built on `ComputeToolWindow` just displays what's currently in the workspace ("Using loaded data: ..." or "No data loaded -- load data via the main window.") -- loading only ever happens through the main window's bar above, so the workspace stays a single source of truth for every open tool.
+* After a tool computes a result, **"Send result to workspace"** makes that result the new workspace contents -- so the next tool you open picks up right where this one left off (e.g. AFM Geometry correction -> straight into an analysis tool, no manual save/reload in between).
 
 ## Adding a new tool
 
 1. Pick an existing category folder under `tools/` (or create a new one -- just a folder with an `__init__.py`, see any existing category for the docstring convention).
 2. Add a module, e.g. `tools/<category>/my_tool.py`:
 
-   ```python
+```python
    from theme.widgets import ComputeToolWindow
 
    TOOL_NAME = "My Tool"
@@ -123,35 +113,34 @@ data set at a time -- the app-wide workspace (`data/store.py`):
 
 
    class ToolWindow(ComputeToolWindow):
-       input_label = "Input file"
-       input_filetypes = (("CSV files", "*.csv"), ("All files", "*.*"))
-
        def __init__(self, parent):
            super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
 
        def compute(self, data):
-           # `data` is whatever's in the shared workspace (or was just
-           # loaded via this tool's own picker) -- already parsed, see
-           # data/loaders.py. Return anything -- a string, a dict,
-           # whatever format_result() (optional override) can turn
-           # into text.
+           # `data` is whatever's currently in the shared workspace,
+           # already parsed (see data/loaders.py). Return anything --
+           # a string, a dict, whatever format_result() (optional
+           # override) can turn into text.
            ...
 
        # optional: override format_result(self, result) -> str and/or
-       # save_result(self, path, content) for custom formatting/export
+       # save_result(self, path, content) for custom formatting/export,
+       # or _build_extra(self, parent) to add tool-specific input
+       # widgets (formula fields, parameter entries, ...) above the
+       # data status cell -- the window resizes to fit automatically.
 
    def open_window(parent) -> None:
        ToolWindow(parent)
-   ```
+```
 3. That's it -- `main.py` discovers it automatically on the next start (`core/registry.py` scans every category folder for modules exposing `TOOL_NAME`, `TOOL_DESCRIPTION`, `open_window`). No other file needs to change.
 
 A module whose filename starts with `_` is treated as a private helper, not a tool, and is skipped by discovery -- use that for code shared between tools in the same category.
 
-See `theme/widgets.py` for the full building-block set (`ToolWindow`, `FileInputRow`, `OutputPanel`, `ComputeToolWindow`, `DataBar`) if a tool needs something more custom than the standard workspace-in/result-out flow.
+See `theme/widgets.py` for the full building-block set (`Cell`, `ToolWindow`, `OutputPanel`, `ComputeToolWindow`) if a tool needs something more custom than the standard workspace-in/result-out flow.
 
 ## Theme
 
-Switch palette via `COLOR_SCHEME` in `theme/style.py` (`dark_purple`, `dark_blue`, `black_white`).
+Switch the color palette via `COLOR_SCHEME` and the font preset via `FONT_SCHEME`, both in `theme/style.py` (`dark_purple`/`dark_blue`/`black_white`, `segoe`/`system`). Main-window grid sizing (columns, cell spacing, max height fraction, ...) lives in the same file as `style.LAYOUT`, a single `Layout` dataclass instance instead of scattered numbers.
 
 ## Requirements
 
