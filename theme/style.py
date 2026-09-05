@@ -41,6 +41,7 @@ COLOR_STATUS_TEXT = _active["STATUS_TEXT"]
 # ------------------------------------------------------------
 # Layout constants (cell grid, as before)
 # ------------------------------------------------------------
+
 CELL_WIDTH = 260
 CELL_HEIGHT = 110
 STATUS_LABEL_CHARS = 32
