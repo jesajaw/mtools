@@ -22,7 +22,7 @@ from data.savers import save_points_csv
 from theme import style, dialogs
 from theme.widgets import Cell
 
-GRID_COLUMNS_MAX = 4
+GRID_COLUMNS_MAX = style.LAYOUT.grid_columns
 
 
 class MainWindow:
@@ -37,15 +37,17 @@ class MainWindow:
         self._build_grid()
         self._size_to_content()
 
-
     def _build_data_bar(self) -> None:
         row = ttk.Frame(self.root, padding=(10, 8))
         row.pack(fill="x")
 
-        self.input_cell = Cell(row, "Load", self._load, status_text=self._io_status_text(), width=(GRID_COLUMNS_MAX * (style.CELL_WIDTH + 12) + 40)/2, height=70)
+        cell_width = style.LAYOUT.grid_width / 2
+        cell_height = style.LAYOUT.io_cell_height
+
+        self.input_cell = Cell(row, "Load", self._load, status_text=self._io_status_text(), width=cell_width, height=cell_height)
         self.input_cell.pack(side="left", padx=(0, 12))
 
-        output_cell = Cell(row, "Save", self._save, extra_button=("Clear", self._clear), width=(GRID_COLUMNS_MAX * (style.CELL_WIDTH + 12) + 40)/2, height=70)
+        output_cell = Cell(row, "Save", self._save, extra_button=("Clear", self._clear), width=cell_width, height=cell_height)
         output_cell.pack(side="right", padx=(12, 0))
 
         ttk.Separator(self.root, orient="horizontal").pack(fill="x", padx=10, pady=(10, 0))
@@ -58,10 +60,7 @@ class MainWindow:
         return f"{store.label()} ({n} row(s))"
 
     def _load(self) -> None:
-        path = dialogs.ask_open_file(
-            self.root, title="Load data",
-            filetypes=(("CSV/text files", "*.csv;*.txt;*.dat"), ("All files", "*.*")),
-        )
+        path = dialogs.ask_open_file(self.root, title="Load data", filetypes=(("CSV/text files", "*.csv;*.txt;*.dat"), ("All files", "*.*")))
         if not path:
             return
         try:
@@ -76,10 +75,7 @@ class MainWindow:
         if not store.is_loaded():
             dialogs.show_error(self.root, "Nothing to save", "No data currently loaded.")
             return
-        path = filedialog.asksaveasfilename(
-            parent=self.root, defaultextension=".csv",
-            filetypes=(("CSV files", "*.csv"), ("All files", "*.*")),
-        )
+        path = filedialog.asksaveasfilename(parent=self.root, defaultextension=".csv", filetypes=(("CSV files", "*.csv"), ("All files", "*.*")))
         if not path:
             return
         save_points_csv(path, store.get())
@@ -88,7 +84,6 @@ class MainWindow:
         if dialogs.ask_yes_no(self.root, title="Clear Data", message="Are you sure you want to clear all data?"):
             store.clear()
             self.input_cell.set_status(self._io_status_text())
-
 
     def _build_grid(self) -> None:
         outer = ttk.Frame(self.root)
@@ -124,7 +119,7 @@ class MainWindow:
 
         for col in range(GRID_COLUMNS_MAX):
             container.columnconfigure(col, weight=1)
-        
+
         row_cursor = 0
 
         grouped: dict[str, list] = {}
@@ -136,8 +131,7 @@ class MainWindow:
 
     def _build_category_block(self, container: ttk.Frame, row_cursor: int, label: str, entries: list) -> int:
         header = ttk.Label(container, text=label, style="CategoryHeader.TLabel")
-        header.grid(row=row_cursor, column=0, columnspan=GRID_COLUMNS_MAX,
-                    sticky="w", pady=(12 if row_cursor else 0, 6))
+        header.grid(row=row_cursor, column=0, columnspan=GRID_COLUMNS_MAX, sticky="w", pady=(12 if row_cursor else 0, 6))
         row_cursor += 1
 
         for i, entry in enumerate(entries):
@@ -147,52 +141,22 @@ class MainWindow:
         return row_cursor
 
     def _build_cell(self, parent: ttk.Frame, row: int, col: int, entry) -> None:
-        cell = Cell(parent, entry.name, lambda e=entry: e.open_window(self.root),
-                    status_text=entry.description)
+        cell = Cell(parent, entry.name, lambda e=entry: e.open_window(self.root), status_text=entry.description)
         cell.grid(row=row, column=col, padx=6, pady=6, sticky="nsew")
-
-    def _make_cell_clickable(self, cell: ttk.Frame, title: ttk.Label, desc: ttk.Label, entry) -> None:
-        widgets = (cell, title, desc)
-
-        def _open(_event=None) -> None:
-            entry.open_window(self.root)
-
-        def _on_enter(_event=None) -> None:
-            cell.configure(style="CellHover.TFrame")
-            title.configure(style="CellTitleHover.TLabel")
-            desc.configure(style="StatusHover.TLabel")
-
-        def _on_leave(_event=None) -> None:
-            cell.configure(style="Cell.TFrame")
-            title.configure(style="CellTitle.TLabel")
-            desc.configure(style="Status.TLabel")
-
-        for w in widgets:
-            w.configure(cursor="hand2")
-            w.bind("<Button-1>", _open)
-            w.bind("<Enter>", _on_enter)
-            w.bind("<Leave>", _on_leave)
 
     def _size_to_content(self) -> None:
         if not self.tools:
-            self.root.geometry(f"{GRID_COLUMNS_MAX * (style.CELL_WIDTH + 12) + 40}x300")
+            self.root.geometry(f"{style.LAYOUT.grid_width}x300")
             return
 
         counts: dict[str, int] = {}
         for entry in self.tools:
             counts[entry.category] = counts.get(entry.category, 0) + 1
 
-        header_height = 34
         total_cell_rows = sum(-(-n // GRID_COLUMNS_MAX) for n in counts.values())
-        width = GRID_COLUMNS_MAX * (style.CELL_WIDTH + 12) + 40
-        ideal_height = (
-            90
-            + 70  # data bar + separator
-            + len(counts) * header_height
-            + total_cell_rows * (style.CELL_HEIGHT + 12)
-            + 40
-        )
-        max_height = int(self.root.winfo_screenheight() * 0.8)
+        width = style.LAYOUT.grid_width
+        ideal_height = 90 + 70 + len(counts) * style.LAYOUT.category_header_height + total_cell_rows * (style.CELL_HEIGHT + 12) + 40  # top margin + data bar/separator + category headers + cell rows + bottom margin
+        max_height = int(self.root.winfo_screenheight() * style.LAYOUT.max_height_fraction)
         height = min(ideal_height, max_height)
         self.root.geometry(f"{width}x{height}")
 
