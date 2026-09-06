@@ -1,19 +1,6 @@
 import math
 
 
-def split_points(points):
-    try:
-        dimension = len(points[0])
-    except TypeError:
-        return len(points), 1, [float(p) for p in points], None, None
-    return (
-        len(points),
-        dimension,
-        [float(p[0]) for p in points],
-        [float(p[1]) for p in points] if dimension > 1 else None,
-        [float(p[2]) for p in points] if dimension > 2 else None,
-    )
-
 def mean(values_list):
     return tuple(
             sum(values) / len(values) for values in values_list)
