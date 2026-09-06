@@ -108,6 +108,10 @@ def apply_style(root) -> None:
 
     style.configure("CategoryHeader.TLabel", background=COLOR_BG, foreground=COLOR, font=FONT_HEADER)
 
+    # copy button
+    style.configure("Icon.TButton", background=COLOR_BG, foreground=COLOR_FG, borderwidth=0, padding=2)
+    style.map("Icon.TButton", background=[("active", COLOR_BG)], foreground=[("active", COLOR)])
+
 
 # Windows-only visual fixes tkinter doesn't handle by itself: DPI awareness (fixes blurry/blocky text on HiDPI displays) and a dark title bar to match the theme. Both are no-ops on non-Windows.
 

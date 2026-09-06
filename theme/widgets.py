@@ -7,7 +7,7 @@ Reusable building blocks for tool windows, so each tool's ui doesn't have to reb
 """
 
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk
 from data import store
 from . import style, dialogs
 
@@ -70,78 +70,66 @@ class Cell(ttk.Frame):
 
 
 class ToolWindow(tk.Toplevel):
-    # Base window for a tool: themed Toplevel with a title, an optional description line, and a `self.content` frame that subclasses fill with their own widgets/parameters.
-
-    def __init__(self, parent, title: str, description: str = "", size: str = "420x360"):
+    # Base window for a tool: themed Toplevel, title in the OS titlebar -- subclasses fill `self.content` with their own widgets/parameters.
+    def __init__(self, parent, title: str, size: str = "420x360"):
         super().__init__(parent)
         self.title(title)
         self.geometry(size)
         self.minsize(340, 300)
         style.apply_style(self)
 
-        header = ttk.Frame(self, padding=10)
-        header.pack(fill="x")
-        ttk.Label(header, text=title, font=style.FONT_TITLE).pack(anchor="w")
-        if description:
-            ttk.Label(header, text=description, style="Status.TLabel", wraplength=380, justify="left").pack(anchor="w", pady=(4, 0))
-
         self.content = ttk.Frame(self, padding=10)
         self.content.pack(fill="both", expand=True)
 
-class OutputPanel(ttk.Frame):
-    # A read-only text area for computed results plus a 'Save...' button. set_text() updates the shown result; the save button opens a save-file dialog and calls on_save(path, text) -- or, if no callback is given, writes the text to that path directly
 
-    def __init__(self, parent, label: str = "Result", on_save=None, filetypes=(("Text files", "*.txt"), ("All files", "*.*")), default_extension: str = ".txt"):
+class ResultDisplay(ttk.Frame):
+    """
+    Compact, read-only result display: one label plus a 'Copy to clipboard' button -- no big text box, no file-save, since most results here are short (a fitted formula, a handful of parameter values), not something that needs a scrollable editor-like area. 
+    set_text() updates what's shown; initial_text is what's shown before the first compute() (e.g. a tool's RESULT_FORMAT dummy, like "y = a*x^n + b*x^2 + ... + c").
+    """
+
+    def __init__(self, parent, label: str = "Result", initial_text: str = ""):
         super().__init__(parent)
-        self.on_save = on_save
-        self.filetypes = filetypes
-        self.default_extension = default_extension
-
         box = ttk.LabelFrame(self, text=label, padding=10)
-        box.pack(fill="both", expand=True)
+        box.pack(fill="x")
 
-        self.text = tk.Text(box, height=8, bg=style.COLOR_BG_LIGHT, fg=style.COLOR_FG, insertbackground=style.COLOR_FG, relief="flat")
-        self.text.pack(fill="both", expand=True)
-        self.text.configure(state="disabled")
-
-        ttk.Button(box, text="Save...", command=self._save).pack(anchor="e", pady=(8, 0))
+        ttk.Button(box, text="\u29c9", style="Icon.TButton", command=self._copy).pack(anchor="e")
+        self.value_label = ttk.Label(box, text=initial_text, style="ResultText.TLabel", wraplength=200, justify="center", anchor="center")
+        self.value_label.pack(fill="x", pady=(0, 8))
 
     def set_text(self, text: str) -> None:
-        self.text.configure(state="normal")
-        self.text.delete("1.0", "end")
-        self.text.insert("1.0", text)
-        self.text.configure(state="disabled")
+        self.value_label.configure(text=text)
 
     def get_text(self) -> str:
-        return self.text.get("1.0", "end-1c")
+        return self.value_label.cget("text")
 
-    def _save(self) -> None:
-        content = self.get_text()
-        if not content.strip():
-            dialogs.show_error(self, "Nothing to save", "There's no result to save yet.")
-            return
-        path = filedialog.asksaveasfilename(parent=self, defaultextension=self.default_extension, filetypes=self.filetypes)
-        if not path:
-            return
-        if self.on_save:
-            self.on_save(path, content)
-        else:
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content)
+    def _copy(self) -> None:
+        self.clipboard_clear()
+        self.clipboard_append(self.get_text())
+
 
 class ComputeToolWindow(ToolWindow):
     """
-    Covers the common case: take the shared workspace data (see data.store), compute a result from it, show/save the result.
-    Subclass and override compute() (and optionally format_result()/save_result()).
+    Covers the common case: take the shared workspace data (see data.store), compute a result from it, show the result.
+    Subclass and override compute() (and optionally format_result()).
 
     Loading data (file or manual entry) happens only in the main window's I/O bar (see main.py's _build_data_bar) -- this window just shows whether something is loaded and, once computed, the result.
 
-    After a successful compute(), "Send result to workspace" becomes available -- click it to make this tool's result the input for whatever tool you open next
+    instructions is shown once, above the data row -- how to use this specific tool (expected input shape, formula syntax, ...).
+    result_format is shown in the result area before the first compute(), as a dummy/template of what the real result will look like (e.g. "y = a*x^n + b*x^2 + ... + c") -- both are meant to be passed through from a tool's own TOOL_INSTRUCTIONS/
+    RESULT_FORMAT module constants, alongside TOOL_NAME/TOOL_DESCRIPTION.
+
+    After a successful compute(), "Send result to workspace" becomes available -- click it to make this tool's result the input for whatever tool you open next (e.g. AFM Geometry -> Analysis).
+    "Visualize" is a placeholder for now -- not wired up to anything yet.
+
+    The window is sized to fit its own content (_size_to_content(), called at the end of __init__) rather than a fixed guessed size -- tools that add extra widgets via _build_extra() (e.g. custom non-linear fit's formula/parameter fields) don't need to pass their own size string, the window just grows to fit.
     """
 
-    def __init__(self, parent, title: str, description: str = "", size: str = "420x560"):
-        super().__init__(parent, title=title, description=description, size=size)
+    def __init__(self, parent, title: str, instructions: str = "", result_format: str = "", size: str = "420x360"):
+        super().__init__(parent, title=title, size=size)
         self._last_result = None
+
+        ttk.Label(self.content, text=instructions, style="Status.TLabel", wraplength=380, justify="left").pack(anchor="w", pady=(0, 8))
 
         self._build_extra(self.content)
 
@@ -149,19 +137,27 @@ class ComputeToolWindow(ToolWindow):
         self._data_row.pack(fill="x", pady=(0, 8))
         self._render_data_row()
 
-        self.output = OutputPanel(self.content, on_save=self.save_result)
-        self.output.pack(fill="both", expand=True, pady=(0, 8))
+        self.output = ResultDisplay(self.content, initial_text=result_format)
+        self.output.pack(fill="x", pady=(0, 8))
 
         btn_row = ttk.Frame(self.content)
         btn_row.pack(fill="x")
-        ttk.Button(btn_row, text="Compute", style="Accent.TButton", command=self.run).pack(side="right")
-        self._send_button = ttk.Button(btn_row, text="Send result to workspace", command=self._send_to_workspace)
-        self._send_button.pack(side="right", padx=(0, 6))
-        self._send_button.configure(state="disabled")
+        Cell(btn_row, "Save", on_click=self._save, height=40, width=80).pack(side="left", fill="x", expand=True, padx=(0, 4))
+        Cell(btn_row, "Visualize", on_click=self._visualize, height=40, width=80).pack(side="left", fill="x", expand=True, padx=4)
+        Cell(btn_row, "Compute", on_click=self.run, height=40, width=80).pack(side="left", fill="x", expand=True, padx=(4, 0))
 
         self._size_to_content()
 
-    # -- data row: read-only status, no browsing/manual entry here --
+    def _visualize(self) -> None:
+        """Placeholder"""
+        pass
+
+    def _size_to_content(self) -> None:
+        self.update_idletasks()
+        width = self.winfo_reqwidth()
+        max_height = int(self.winfo_screenheight() * style.LAYOUT.max_height_fraction)
+        height = min(self.winfo_reqheight(), max_height)
+        self.geometry(f"{width}x{height}")
 
     def _render_data_row(self) -> None:
         for w in self._data_row.winfo_children():
@@ -171,12 +167,12 @@ class ComputeToolWindow(ToolWindow):
             text = f"Using loaded data: {store.label()}"
         else:
             text = "No data loaded -- load data via the main window."
-        Cell(self._data_row, "Data", status_text=text).pack(anchor="w")
+        ttk.Label(self._data_row, text=text, style="Status.TLabel").pack(anchor="w")
 
     # -- extension point ---------------------------------------------
 
     def _build_extra(self, parent) -> None:
-        # Override to insert tool-specific widgets (e.g. the model formula / parameter fields the custom non-linear fit needs) between the description and the shared data row. No-op by default
+        # Override to insert tool-specific widgets
         pass
 
     # -- compute / result -------------------------------------------
@@ -186,13 +182,8 @@ class ComputeToolWindow(ToolWindow):
         raise NotImplementedError
 
     def format_result(self, result) -> str:
-        # Override if the result needs custom formatting. Default: plain str(result)
+        # Override if the result needs custom formatting. Default: plain str(result).
         return str(result)
-
-    def save_result(self, path: str, content: str) -> None:
-        # Override for a custom save format (e.g. CSV instead of plain text). Default: write the displayed text as-is
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(content)
 
     def run(self) -> None:
         if not store.is_loaded():
@@ -205,20 +196,12 @@ class ComputeToolWindow(ToolWindow):
             return
         if type(result) == str:
             return dialogs.show_error(self, "Computation failed", result)
-        
+
         self._last_result = result
-        self._send_button.configure(state="normal")
         self.output.set_text(self.format_result(result))
 
-    def _send_to_workspace(self) -> None:
+    def _save(self) -> None:
         if self._last_result is None:
             return
         store.set(self._last_result, f"Output of {self.title()}")
         self._render_data_row()
-
-    def _size_to_content(self) -> None:
-        self.update_idletasks()
-        width = self.winfo_reqwidth()
-        max_height = int(self.winfo_screenheight() * style.LAYOUT.max_height_fraction)
-        height = min(self.winfo_reqheight(), max_height)
-        self.geometry(f"{width}x{height}")

@@ -1,11 +1,5 @@
 """
-Custom non-linear curve fitting tool. Fits an arbitrary user-supplied
-model y = f(x; p1, p2, ...) via damped Gauss-Newton (Levenberg-
-Marquardt) least squares, using a numerical (finite-difference)
-Jacobian -- no closed-form derivative needed from the user. The model
-formula is plain Python syntax with `x` plus the named parameters in
-scope, and the functions/constants from the `math` module available
-(sin, cos, exp, log, sqrt, pi, ...).
+Custom non-linear curve fitting tool. Fits an arbitrary user-supplied model y = f(x; p1, p2, ...) via damped Gauss-Newton (Levenberg-Marquardt) least squares, using a numerical (finite-difference) Jacobian -- no closed-form derivative needed from the user. The model formula is plain Python syntax with `x` plus the named parameters in scope, and the functions/constants from the `math` module available (sin, cos, exp, log, sqrt, pi, ...).
 """
 
 import math
@@ -18,6 +12,7 @@ TOOL_DESCRIPTION = "Fit an arbitrary user-defined model y = f(x; params) via Lev
 
 # Formula evaluation namespace: math functions/constants plus a
 # couple of harmless builtins, nothing else -- no access to __builtins__.
+
 _ALLOWED_NAMES = {name: getattr(math, name) for name in dir(math) if not name.startswith("_")}
 _ALLOWED_NAMES.update({"abs": abs, "min": min, "max": max})
 
@@ -53,7 +48,6 @@ def make_model(expression: str, param_names: list):
         local_ns = dict(zip(param_names, params))
         local_ns["x"] = x
         return eval(code, {"__builtins__": {}, **_ALLOWED_NAMES}, local_ns)
-
     return f
 
 
