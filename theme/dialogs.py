@@ -18,6 +18,9 @@ class ThemedDialog(tk.Toplevel):
         self.title(title)
         self.resizable(False, False)
         self.transient(parent)
+        
+        style.force_dark_titlebar(self)
+
         self.grab_set()
 
         self.result: str | None = None

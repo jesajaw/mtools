@@ -1,10 +1,11 @@
 import tools.mathlib as t
+from . import _points
 from theme.widgets import ComputeToolWindow
 
 TOOL_NAME = "Linear Regression"
 TOOL_DESCRIPTION = "Linear line fit for 2D or 3D data."
-TOOL_INSTRUCTIONS = "Load (x, y) or (x, y, z) points via the main window, then click Compute."
-RESULT_FORMAT = "y = a*x + b"
+TOOL_INSTRUCTIONS = "Load (x), (x, y) or (x, y, z) points via the main window (see format hints, datalabel should show you, that youre data is valid), then click Compute and after that, save or visualize as you wish."
+RESULT_FORMAT = "y = a*x + b || z = a + b*x + c*y"
 
 def _fit_2d(n, x, y):
     slope = (n * t.sum_list(t.products(x, y)) - t.sum_list(x) * t.sum_list(y)) / (n * t.sum_list(t.square(x)) - t.square(t.sum_list(x))) # ordinary least-squares slope/intercept fit
@@ -21,11 +22,9 @@ def _fit_3d(x, y, z):
                   ]), (cx, cy, cz))
 
 
-def process(points):
-    n, d, x, y, z = t.split_points(points)
+def process(data):
+    n, d, x, y, z = _points.split_data(data)
     try:
-        if not y:
-            y = list(range(n))
         if not z:
             return _fit_2d(n, x, y), d, (x, y)
         return _fit_3d(x, y, z), d, (x, y, z)

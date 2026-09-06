@@ -138,3 +138,14 @@ def apply_dark_titlebar(window) -> None:
         result = ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, attribute, ctypes.byref(value), ctypes.sizeof(value))
         if result == 0:
             break
+
+def force_dark_titlebar(window) -> None:
+        if not _is_win():
+            return
+        window.update()
+        try:
+            hwnd = ctypes.windll.user32.GetParent(window.winfo_id())
+            rendering_policy = ctypes.c_int(2)
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(rendering_policy), ctypes.sizeof(rendering_policy))
+        except Exception:
+            pass

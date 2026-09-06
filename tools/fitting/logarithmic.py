@@ -1,6 +1,8 @@
 """
-Logarithmic regression tool. Fits y = a*ln(x) + b via an ordinary
-least-squares line fit of y against ln(x) -- the mirror image of the
+Logarithmic regression tool.
+Fits y = a*log_alpha(x) + b via an ordinary least-squares line and z = a + b*log_alpha(x) + c*log_beta(y)
+
+fit of y against ln(x) -- the mirror image of the
 exponential tool's linearization (there it's ln(y) against x, here
 it's y against ln(x)).
 """
