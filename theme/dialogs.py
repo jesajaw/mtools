@@ -16,6 +16,7 @@ class ThemedDialog(tk.Toplevel):
         super().__init__(parent)
         self.title(title)
         self.configure(bg=style.COLOR_BG)
+        style.apply_dark_titlebar(self)
         self.resizable(False, False)
         self.transient(parent)
         self.grab_set()

@@ -1,9 +1,10 @@
 import tools.mathlib as t
 from theme.widgets import ComputeToolWindow
 
-TOOL_NAME = "Linear"
+TOOL_NAME = "Linear Regression"
 TOOL_DESCRIPTION = "Linear line fit for 2D or 3D data."
-
+TOOL_INSTRUCTIONS = "Load (x, y) or (x, y, z) points via the main window, then click Compute."
+RESULT_FORMAT = "y = a*x + b"
 
 def _fit_2d(n, x, y):
     slope = (n * t.sum_list(t.products(x, y)) - t.sum_list(x) * t.sum_list(y)) / (n * t.sum_list(t.square(x)) - t.square(t.sum_list(x))) # ordinary least-squares slope/intercept fit
@@ -34,7 +35,7 @@ def process(points):
 
 class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
-        super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
+        super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=RESULT_FORMAT)
 
     def compute(self, data) -> dict:
         result = process(data)

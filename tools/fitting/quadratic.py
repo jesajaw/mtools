@@ -21,11 +21,9 @@ def process(points):
     if not y:
         y = list(range(n))
     if z:
-        raise ValueError(
-            "Quadratic fit only supports 2D data (x, y) -- see 'Polynomial' for the 3D surface fit."
-        )
+        raise ValueError("Quadratic fit only supports 2D data (x, y) -- see 'Polynomial' for the 3D surface fit.")
     c0, c1, c2 = polynomial._fit_2d(x, y)
-    return c2, c1, c0, d, (x, y)  # a, b, c
+    return c2, c1, c0, d, (x, y) # a, b, c
 
 
 class ToolWindow(ComputeToolWindow):
