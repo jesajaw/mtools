@@ -114,9 +114,11 @@ def apply_style(root) -> None:
 
 
 # Windows-only visual fixes tkinter doesn't handle by itself: DPI awareness (fixes blurry/blocky text on HiDPI displays) and a dark title bar to match the theme. Both are no-ops on non-Windows.
+def _is_win() -> bool:
+    return sys.platform == "win32"
 
 def enable_dpi_awareness() -> None:
-    if sys.platform != "win32":
+    if not _is_win():
         return
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(1)  # PROCESS_SYSTEM_DPI_AWARE
@@ -126,16 +128,13 @@ def enable_dpi_awareness() -> None:
         except Exception:
             pass
 
-
 def apply_dark_titlebar(window) -> None:
-    if sys.platform != "win32":
+    if not _is_win():
         return
     window.update_idletasks()
     hwnd = ctypes.windll.user32.GetParent(window.winfo_id())
     for attribute in (20, 19):  # DWMWA_USE_IMMERSIVE_DARK_MODE: 20 (Win10 2004+), 19 (older)
         value = ctypes.c_int(1)
-        result = ctypes.windll.dwmapi.DwmSetWindowAttribute(
-            hwnd, attribute, ctypes.byref(value), ctypes.sizeof(value)
-        )
+        result = ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, attribute, ctypes.byref(value), ctypes.sizeof(value))
         if result == 0:
             break
