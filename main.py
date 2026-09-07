@@ -181,10 +181,7 @@ class MainWindow:
                 expanded.add(label)
             on_toggle()
 
-        arrow = '\u25be' if is_expanded else '\u25b8'
-        display_name = label.replace('_', ' ').title()
-        count_text = f"{len(entries)} Tools" if not is_expanded else "click to collapse"
-        front = Cell(wrapper, f"{arrow} {display_name}\n{count_text}", on_click=_toggle)
+        front = Cell(wrapper, f"{'\u25bc' if is_expanded else '\u25b6'}  {label.replace('_', ' ').title()}\n{f"{len(entries)} Tools" if not is_expanded else "click to collapse"}", on_click=_toggle)
 
         if not is_expanded and len(entries) > 0:
             max_i = min(len(entries), 3)
