@@ -75,7 +75,7 @@ class MainWindow:
         path = filedialog.asksaveasfilename(parent=self.root, defaultextension=".csv", filetypes=(("CSV files", "*.csv"), ("All files", "*.*")))
         if not path:
             return
-        savers.save_points_csv(path, store.get())
+        savers.save(path, store.get())
 
     def _clear(self) -> None:
         if dialogs.ask_yes_no(self.root, title="Clear Data", message="Are you sure you want to clear all data?"):
@@ -150,9 +150,9 @@ class MainWindow:
 
             items: list = list(direct)
             for name in sorted(subcategories, key=str.lower):
-                items.append(("stack", name, subcategories[name]))  # the stack tile itself always stays
+                items.append(("stack", name, subcategories[name]))
                 if name in expanded:
-                    items.extend(subcategories[name])  # its tools appear right after it, in addition
+                    items.extend(subcategories[name])
 
             for i, item in enumerate(items):
                 r, c = divmod(i, GRID_COLUMNS_MAX)
@@ -163,16 +163,16 @@ class MainWindow:
                     self._build_cell(body, r, c, item)
 
         render()
-        return row_cursor + 1  # body is always exactly one row in container's grid, however many rows it has internally
+        return row_cursor + 1
 
     def _build_subcategory_stack(self, parent: ttk.Frame, row: int, col: int, label: str, entries: list, is_expanded: bool, expanded: set, on_toggle) -> None:
         wrapper = ttk.Frame(parent, width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
         wrapper.grid(row=row, column=col, padx=6, pady=6, sticky="nsew")
-        wrapper.grid_propagate(False)
 
-        if not expanded:
-            for i in range(min(len(entries), 3) if not is_expanded else 1 - 1, 0, -1):
-                Cell(wrapper, "", width=style.CELL_WIDTH - 30, height=style.CELL_HEIGHT - 15).place(x=i * 10, y=i * 5)
+        if not is_expanded:
+            for i in range(min(len(entries), 3), 0, -1):
+                x_off, y_off = i * 10, i * 5
+                Cell(wrapper, "").place(relx=0, rely=0, relwidth=1, relheight=1, x=x_off, y=y_off, width=-x_off, height=-y_off)
 
         def _toggle() -> None:
             if label in expanded:
@@ -181,11 +181,16 @@ class MainWindow:
                 expanded.add(label)
             on_toggle()
 
-        arrow = "\u25be" if is_expanded else "\u25b8"
-        display_name = label.replace("_", " ").title()
-        status = f"{len(entries)} Tools" if not is_expanded else "click to wrap"
-        front = Cell(wrapper, f"{arrow} {display_name}\n {status}", on_click=_toggle, width=style.CELL_WIDTH - 30, height=style.CELL_HEIGHT - 15)
-        front.place(x=0, y=0)
+        arrow = '\u25be' if is_expanded else '\u25b8'
+        display_name = label.replace('_', ' ').title()
+        count_text = f"{len(entries)} Tools" if not is_expanded else "click to collapse"
+        front = Cell(wrapper, f"{arrow} {display_name}\n{count_text}", on_click=_toggle)
+
+        if not is_expanded and len(entries) > 0:
+            max_i = min(len(entries), 3)
+            front.place(relx=0, rely=0, relwidth=1, relheight=1, x=0, y=0, width=-(max_i * 10), height=-(max_i * 5))
+        else:
+            front.place(relx=0, rely=0, relwidth=1, relheight=1, x=0, y=0, width=0, height=0)
 
     def _build_cell(self, parent: ttk.Frame, row: int, col: int, entry) -> None:
         cell = Cell(parent, entry.name, lambda e=entry: e.open_window(self.root), status_text=entry.description)
@@ -202,7 +207,7 @@ class MainWindow:
             if entry.subcategory:
                 seen = seen_subcategories.setdefault(entry.category, set())
                 if entry.subcategory in seen:
-                    continue  # already counted -- a collapsed subcategory is one slot, not one per tool
+                    continue
                 seen.add(entry.subcategory)
             counts[entry.category] = counts.get(entry.category, 0) + 1
 
