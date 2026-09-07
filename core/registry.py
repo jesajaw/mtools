@@ -48,11 +48,6 @@ def _ensure_project_root_on_path(tools_package: ModuleType) -> None:
 
 
 def _discover_tools_in_category(category_module: ModuleType, category_name: str, subcategory: str | None) -> list[ToolEntry]:
-    """
-    Recursively walks a category package: a tool module found directly inside is registered with the given subcategory (None at the top level);
-    a sub-package found inside (e.g. tools/fitting/regression/) is walked the same way, one level deeper, with its own folder name as the subcategory --
-    no depth limit, though the UI only ever renders one level of nesting. category_name is always the top-level folder, unchanged no matter how deep a tool lives.
-    """
     entries: list[ToolEntry] = []
 
     for tool_info in pkgutil.iter_modules(category_module.__path__, category_module.__name__ + "."):
