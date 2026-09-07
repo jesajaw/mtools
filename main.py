@@ -39,14 +39,13 @@ class MainWindow:
         row = ttk.Frame(self.root, padding=(10, 8))
         row.pack(fill="x")
 
-        cell_width = style.LAYOUT.grid_width / 2
         cell_height = style.LAYOUT.io_cell_height
 
-        self.input_cell = Cell(row, "Load", self._load, status_text=self._io_status_text(), width=cell_width, height=cell_height)
-        self.input_cell.pack(side="left", padx=(0, 12))
+        self.input_cell = Cell(row, "Load", self._load, status_text=self._io_status_text(), height=cell_height)
+        self.input_cell.pack(side="left", fill="x", expand=True, padx=(0, 12))
 
-        output_cell = Cell(row, "Save", self._save, extra_button=("Clear", self._clear), width=cell_width, height=cell_height)
-        output_cell.pack(side="right", padx=(12, 0))
+        output_cell = Cell(row, "Save", self._save, extra_button=("Clear", self._clear), height=cell_height)
+        output_cell.pack(side="right", fill="x", expand=True, padx=(12, 0))
 
         ttk.Separator(self.root, orient="horizontal").pack(fill="x", padx=10, pady=(10, 0))
 
@@ -137,57 +136,55 @@ class MainWindow:
         for col in range(GRID_COLUMNS_MAX):
             body.columnconfigure(col, weight=1)
 
+        direct = [e for e in entries if not e.subcategory]
+        subcategories: dict[str, list] = {}
+        for e in entries:
+            if e.subcategory:
+                subcategories.setdefault(e.subcategory, []).append(e)
+
         expanded: set[str] = set()
 
         def render() -> None:
             for w in body.winfo_children():
                 w.destroy()
 
-            direct = [e for e in entries if not e.subcategory]
-            subcategories: dict[str, list] = {}
-            for e in entries:
-                if e.subcategory:
-                    subcategories.setdefault(e.subcategory, []).append(e)
-
             items: list = list(direct)
             for name in sorted(subcategories, key=str.lower):
+                items.append(("stack", name, subcategories[name]))  # the stack tile itself always stays
                 if name in expanded:
-                    items.extend(subcategories[name])  # unfolded -- now just normal tools
-                else:
-                    items.append((name, subcategories[name]))  # still a collapsed stack
+                    items.extend(subcategories[name])  # its tools appear right after it, in addition
 
             for i, item in enumerate(items):
                 r, c = divmod(i, GRID_COLUMNS_MAX)
                 if isinstance(item, tuple):
-                    self._build_subcategory_stack(body, r, c, item[0], item[1], expanded, render)
+                    _, name, subcat_entries = item
+                    self._build_subcategory_stack(body, r, c, name, subcat_entries, name in expanded, expanded, render)
                 else:
                     self._build_cell(body, r, c, item)
 
         render()
-        row_cursor += -(-len(entries) // GRID_COLUMNS_MAX) if entries else 0
-        return row_cursor
+        return row_cursor + 1  # body is always exactly one row in container's grid, however many rows it has internally
 
-    def _build_subcategory_stack(self, parent: ttk.Frame, row: int, col: int, label: str, entries: list, expanded: set, on_toggle) -> None:
-        """A stack-of-cards tile standing in for a collapsed
-        subcategory -- one normal grid slot, styled to look like 2-3
-        Cells layered behind the front one. Clicking it expands in
-        place: the stack disappears and its tools appear as regular
-        cells right where it was (on_toggle re-renders the whole
-        category body, since adding N tools shifts everything after
-        this position)."""
+    def _build_subcategory_stack(self, parent: ttk.Frame, row: int, col: int, label: str, entries: list, is_expanded: bool, expanded: set, on_toggle) -> None:
         wrapper = ttk.Frame(parent, width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
         wrapper.grid(row=row, column=col, padx=6, pady=6, sticky="nsew")
         wrapper.grid_propagate(False)
 
-        for offset in (10, 5):
-            ttk.Frame(wrapper, style="Cell.TFrame", width=style.CELL_WIDTH, height=style.CELL_HEIGHT).place(x=offset, y=offset)
+        if not expanded:
+            for i in range(min(len(entries), 3) if not is_expanded else 1 - 1, 0, -1):
+                Cell(wrapper, "", width=style.CELL_WIDTH - 30, height=style.CELL_HEIGHT - 15).place(x=i * 10, y=i * 5)
 
-        def _expand() -> None:
-            expanded.add(label)
+        def _toggle() -> None:
+            if label in expanded:
+                expanded.discard(label)
+            else:
+                expanded.add(label)
             on_toggle()
 
+        arrow = "\u25be" if is_expanded else "\u25b8"
         display_name = label.replace("_", " ").title()
-        front = Cell(wrapper, f"{display_name} ({len(entries)})", on_click=_expand, width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
+        status = f"{len(entries)} Tools" if not is_expanded else "click to wrap"
+        front = Cell(wrapper, f"{arrow} {display_name}\n {status}", on_click=_toggle, width=style.CELL_WIDTH - 30, height=style.CELL_HEIGHT - 15)
         front.place(x=0, y=0)
 
     def _build_cell(self, parent: ttk.Frame, row: int, col: int, entry) -> None:
@@ -200,7 +197,13 @@ class MainWindow:
             return
 
         counts: dict[str, int] = {}
+        seen_subcategories: dict[str, set] = {}
         for entry in self.tools:
+            if entry.subcategory:
+                seen = seen_subcategories.setdefault(entry.category, set())
+                if entry.subcategory in seen:
+                    continue  # already counted -- a collapsed subcategory is one slot, not one per tool
+                seen.add(entry.subcategory)
             counts[entry.category] = counts.get(entry.category, 0) + 1
 
         total_cell_rows = sum(-(-n // GRID_COLUMNS_MAX) for n in counts.values())

@@ -113,6 +113,9 @@ def apply_style(root) -> None:
     style.configure("Icon.TButton", background=COLOR_BG, foreground=COLOR_FG, borderwidth=0, padding=2)
     style.map("Icon.TButton", background=[("active", COLOR_BG)], foreground=[("active", COLOR)])
 
+    # stack-of-cards shadow tiles behind a collapsed subcategory's front Cell
+    style.configure("CellShadow.TFrame", background=COLOR_DARK, bordercolor=COLOR)
+
 
 # Windows-only visual fixes tkinter doesn't handle by itself: DPI awareness (fixes blurry/blocky text on HiDPI displays) and a dark title bar to match the theme. Both are no-ops on non-Windows.
 def _is_win() -> bool:
