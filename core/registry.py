@@ -28,7 +28,8 @@ def discover_tools(tools_package: ModuleType) -> list[ToolEntry]:
             traceback.print_exc()
             continue
 
-        entries.extend(_discover_tools_in_category(category_module))
+        category_name = category_info.name.rsplit(".", 1)[-1]
+        entries.extend(_discover_tools_in_category(category_module, category_name, subcategory=None))
 
     entries.sort(key=lambda e: (e.category.lower(), e.name.lower()))
     return entries
@@ -46,16 +47,29 @@ def _ensure_project_root_on_path(tools_package: ModuleType) -> None:
         sys.path.insert(0, project_root)
 
 
-def _discover_tools_in_category(category_module: ModuleType) -> list[ToolEntry]:
+def _discover_tools_in_category(category_module: ModuleType, category_name: str, subcategory: str | None) -> list[ToolEntry]:
+    """
+    Recursively walks a category package: a tool module found directly inside is registered with the given subcategory (None at the top level);
+    a sub-package found inside (e.g. tools/fitting/regression/) is walked the same way, one level deeper, with its own folder name as the subcategory --
+    no depth limit, though the UI only ever renders one level of nesting. category_name is always the top-level folder, unchanged no matter how deep a tool lives.
+    """
     entries: list[ToolEntry] = []
-    category_name = category_module.__name__.rsplit(".", 1)[-1]
 
     for tool_info in pkgutil.iter_modules(category_module.__path__, category_module.__name__ + "."):
-        if tool_info.ispkg:
-            continue  # tools are single modules, not sub-packages
         module_basename = tool_info.name.rsplit(".", 1)[-1]
         if module_basename.startswith("_"):
-            continue  # private helper module (e.g. _points.py), not a tool
+            continue  # private helper module/package (e.g. _points.py), not a tool
+
+        if tool_info.ispkg:
+            try:
+                subcategory_module = importlib.import_module(tool_info.name)
+            except Exception:
+                print(f"[mtools] Could not load subcategory '{tool_info.name}':")
+                traceback.print_exc()
+                continue
+            entries.extend(_discover_tools_in_category(subcategory_module, category_name, subcategory=module_basename))
+            continue
+
         try:
             module = importlib.import_module(tool_info.name)
         except Exception:
@@ -74,6 +88,7 @@ def _discover_tools_in_category(category_module: ModuleType) -> list[ToolEntry]:
         entries.append(ToolEntry(
             module_name=tool_info.name,
             category=category_name,
+            subcategory=subcategory,
             name=module.TOOL_NAME,
             description=module.TOOL_DESCRIPTION,
             open_window=module.open_window,

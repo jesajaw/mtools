@@ -132,11 +132,63 @@ class MainWindow:
         header.grid(row=row_cursor, column=0, columnspan=GRID_COLUMNS_MAX, sticky="w", pady=(12 if row_cursor else 0, 6))
         row_cursor += 1
 
-        for i, entry in enumerate(entries):
-            r, c = divmod(i, GRID_COLUMNS_MAX)
-            self._build_cell(container, row_cursor + r, c, entry)
-        row_cursor += -(-len(entries) // GRID_COLUMNS_MAX)  # ceil division
+        body = ttk.Frame(container)
+        body.grid(row=row_cursor, column=0, columnspan=GRID_COLUMNS_MAX, sticky="nsew")
+        for col in range(GRID_COLUMNS_MAX):
+            body.columnconfigure(col, weight=1)
+
+        expanded: set[str] = set()
+
+        def render() -> None:
+            for w in body.winfo_children():
+                w.destroy()
+
+            direct = [e for e in entries if not e.subcategory]
+            subcategories: dict[str, list] = {}
+            for e in entries:
+                if e.subcategory:
+                    subcategories.setdefault(e.subcategory, []).append(e)
+
+            items: list = list(direct)
+            for name in sorted(subcategories, key=str.lower):
+                if name in expanded:
+                    items.extend(subcategories[name])  # unfolded -- now just normal tools
+                else:
+                    items.append((name, subcategories[name]))  # still a collapsed stack
+
+            for i, item in enumerate(items):
+                r, c = divmod(i, GRID_COLUMNS_MAX)
+                if isinstance(item, tuple):
+                    self._build_subcategory_stack(body, r, c, item[0], item[1], expanded, render)
+                else:
+                    self._build_cell(body, r, c, item)
+
+        render()
+        row_cursor += -(-len(entries) // GRID_COLUMNS_MAX) if entries else 0
         return row_cursor
+
+    def _build_subcategory_stack(self, parent: ttk.Frame, row: int, col: int, label: str, entries: list, expanded: set, on_toggle) -> None:
+        """A stack-of-cards tile standing in for a collapsed
+        subcategory -- one normal grid slot, styled to look like 2-3
+        Cells layered behind the front one. Clicking it expands in
+        place: the stack disappears and its tools appear as regular
+        cells right where it was (on_toggle re-renders the whole
+        category body, since adding N tools shifts everything after
+        this position)."""
+        wrapper = ttk.Frame(parent, width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
+        wrapper.grid(row=row, column=col, padx=6, pady=6, sticky="nsew")
+        wrapper.grid_propagate(False)
+
+        for offset in (10, 5):
+            ttk.Frame(wrapper, style="Cell.TFrame", width=style.CELL_WIDTH, height=style.CELL_HEIGHT).place(x=offset, y=offset)
+
+        def _expand() -> None:
+            expanded.add(label)
+            on_toggle()
+
+        display_name = label.replace("_", " ").title()
+        front = Cell(wrapper, f"{display_name} ({len(entries)})", on_click=_expand, width=style.CELL_WIDTH, height=style.CELL_HEIGHT)
+        front.place(x=0, y=0)
 
     def _build_cell(self, parent: ttk.Frame, row: int, col: int, entry) -> None:
         cell = Cell(parent, entry.name, lambda e=entry: e.open_window(self.root), status_text=entry.description)
