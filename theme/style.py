@@ -58,6 +58,7 @@ class Layout:
     outer_padding: int = 40
     io_cell_height: int = 70
     category_header_height: int = 34
+    subcategory_row_height: int = 42
     max_height_fraction: float = 0.8
 
     @property

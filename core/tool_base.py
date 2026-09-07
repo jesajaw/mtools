@@ -28,6 +28,7 @@ class ToolEntry:
     # Metadata for a discovered tool, collected by the registry.
     module_name: str
     category: str
+    subcategory: str | None
     name: str
     description: str
     open_window: Callable[..., None]
