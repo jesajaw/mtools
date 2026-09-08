@@ -52,30 +52,30 @@ class MainWindow:
     def _io_status_text(self) -> str:
         if not store.is_loaded():
             return "no data loaded"
-        data = store.get()
-        n = len(data) if hasattr(data, "__len__") else "?"
+        ds = store.get()
+        n = len(next(iter(ds.axes.values())).values) if ds.axes else "?"
         return f"{store.label()} ({n} row(s))"
 
     def _load(self) -> None:
-        path = dialogs.ask_open_file(self.root, title="Load data", filetypes=(("CSV/text files", "*.csv;*.txt;*.dat"), ("All files", "*.*")))
+        path = dialogs.ask_open_file(...)
         if not path:
             return
         try:
-            data = loaders.load_points(path)
+            dataset = loaders.load_dataset(path)
         except Exception as e:
             dialogs.show_error(self.root, "Load failed", str(e))
             return
-        store.set(data, Path(path).name)
+        store.add(dataset)
         self.input_cell.set_status(self._io_status_text())
 
     def _save(self) -> None:
         if not store.is_loaded():
             dialogs.show_error(self.root, "Nothing to save", "No data currently loaded.")
             return
-        path = filedialog.asksaveasfilename(parent=self.root, defaultextension=".csv", filetypes=(("CSV files", "*.csv"), ("All files", "*.*")))
+        path = filedialog.asksaveasfilename(...)
         if not path:
             return
-        savers.save(path, store.get())
+        savers.save_dataset_csv(path, store.get())
 
     def _clear(self) -> None:
         if dialogs.ask_yes_no(self.root, title="Clear Data", message="Are you sure you want to clear all data?"):

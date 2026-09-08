@@ -1,35 +1,46 @@
 """
-Shared in-memory data workspace ("current data set" for the running app).
-One tool's output can become the next tool's input without a file round-trip.
+Shared in-memory data workspace: every DataSet added this session, kept in order -- not just one overwritable slot. A tool's output becomes part of the workspace's history rather than replacing whatever was there, so a chain of results stays inspectable, not just the very last step.
 
-This is process-global, on purpose -- there's exactly one workspace for the whole app, mirroring the single "Input | Output" bar in the main window.
+Still process-global by design -- one workspace for the whole running app, mirroring "the data" as a single shared concept rather than a per-tool file.
 """
 
-_data = None
-_label: str | None = None
+from data.dataset import DataSet
+
+_history: list[DataSet] = []
 
 
 def is_loaded() -> bool:
-    return _data is not None
+    return bool(_history)
 
 
-def get():
-    # Returns the current data, or None if nothing is loaded
-    return _data
+def add(dataset: DataSet) -> None:
+    # Adds a DataSet to the workspace
+    _history.append(dataset)
+
+
+def get() -> DataSet | None:
+    # most recently added DataSet
+    return _history[-1] if _history else None
+
+
+def all() -> list[DataSet]:
+    # Every DataSet added this session, oldest first
+    return list(_history)
+
+
+def latest_with(key: str) -> DataSet | None:
+    # The most recently added DataSet that actually has `key` among its data or axes arrays
+    for dataset in reversed(_history):
+        if key in dataset.data or key in dataset.axes:
+            return dataset
+    return None
 
 
 def label() -> str | None:
-    # description of the current data (e.g. a filename, or "Output of Geometry"), or None if nothing is loaded
-    return _label
-
-
-def set(new_data, new_label: str) -> None:
-    global _data, _label
-    _data = new_data
-    _label = new_label
+    # Convenience passthrough -- the most recent DataSet's name, or None if nothing is loaded (or it has none)
+    current = get()
+    return current.name if current else None
 
 
 def clear() -> None:
-    global _data, _label
-    _data = None
-    _label = None
+    _history.clear()

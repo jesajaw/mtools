@@ -10,6 +10,7 @@ import tkinter as tk
 from tkinter import ttk
 from data import store
 from . import style, dialogs
+from data.dataset import DataSet, DataArray
 
 class Cell(ttk.Frame):
     """
@@ -177,9 +178,10 @@ class ComputeToolWindow(ToolWindow):
 
     # -- compute / result -------------------------------------------
 
-    def compute(self, data):
+    def compute(self, dataset) -> dict:
+        return process(_points.dataset_to_points(dataset))
         # Override: turn the workspace data into a result (any type -- format_result() below turns it into display text)
-        raise NotImplementedError
+        #raise NotImplementedError
 
     def format_result(self, result) -> str:
         # Override if the result needs custom formatting. Default: plain str(result).
@@ -203,5 +205,9 @@ class ComputeToolWindow(ToolWindow):
     def _save(self) -> None:
         if self._last_result is None:
             return
-        store.set(self._last_result, f"Output of {self.title()}")
+        store.add(DataSet(
+            name=f"Output of {self.title()}",
+            data={k: DataArray(values=v, name=k) for k, v in self._last_result.items()},
+            source_tool=self.title(),
+        ))
         self._render_data_row()

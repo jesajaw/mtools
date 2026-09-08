@@ -19,3 +19,13 @@ def save_points_csv(path: str, points) -> None:
         writer = csv.writer(f)
         for p in points:
             writer.writerow([p] if isinstance(p, (int, float)) else list(p))
+
+
+def save_dataset_csv(path: str, dataset) -> None:
+    arrays = list(dataset.axes.values()) + list(dataset.data.values())
+    if not arrays:
+        raise ValueError("Nothing to save -- this dataset has no arrays.")
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        for row in zip(*(a.values for a in arrays)):
+            writer.writerow(row)
