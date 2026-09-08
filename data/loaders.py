@@ -12,6 +12,18 @@ _DELIMITER_SPLITTERS = [ # todo... this is bs
 ]
 
 
+from data.dataset import DataSet, DataArray
+
+def load_dataset(path: str) -> DataSet:
+    raw = load_points(path)
+    name = Path(path).name
+    if raw and isinstance(raw[0], (int, float)):
+        return DataSet(name=name, axes={"x": DataArray(values=list(raw), name="x")})
+    labels = ("x", "y", "z")
+    width = len(raw[0])
+    axes = {labels[i]: DataArray(values=[p[i] for p in raw], name=labels[i]) for i in range(width)}
+    return DataSet(name=name, axes=axes)
+
 def load_points(path: str):
     """
     Reads points from a file, format inferred from the extension.
