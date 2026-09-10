@@ -2,10 +2,10 @@ import tools.mathlib as t
 from . import _points
 from theme.widgets import ComputeToolWindow
 
-TOOL_NAME = "Linear Regression"
+TOOL_NAME = "Linear"
 TOOL_DESCRIPTION = "Linear line fit for 2D or 3D data."
 TOOL_INSTRUCTIONS = "Load (x), (x, y) or (x, y, z) points via the main window (see format hints, datalabel should show you, that youre data is valid), then click Compute and after that, save or visualize as you wish."
-RESULT_FORMAT = "y = a*x + b || z = a + b*x + c*y"
+RESULT_FORMAT = "y = a*x + b \n z = a + b*x + c*y"
 
 def _fit_3d(x, y, z):
     cx, cy, cz = t.mean([x, y, z]) # center
