@@ -56,23 +56,20 @@ class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
         super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=RESULT_FORMAT)
 
-    def compute(self, data):
+    def compute(self, data) -> dict:
         result = process(data)
         if isinstance(result, Exception):
             return {"error": str(result)}
-        return result
-
-    def format_result(self, result) -> str:
-        if isinstance(result, dict):
-            return result["error"]
         if len(result) == 3:
             c0, c1, c2 = result
-            return f"c0 = {c0:.6g}\nc1 = {c1:.6g}\nc2 = {c2:.6g}\n"
+            return {"name": TOOL_NAME, "c0": c0, "c1": c1, "c2": c2}
         c0, c1, c2, c3, c4, c5 = result
-        return (
-            f"c0 = {c0:.6g}\nc1 = {c1:.6g}\nc2 = {c2:.6g}\n"
-            f"c3 = {c3:.6g}\nc4 = {c4:.6g}\nc5 = {c5:.6g}\n"
-        )
+        return {"name": TOOL_NAME, "c0": c0, "c1": c1, "c2": c2, "c3": c3, "c4": c4, "c5": c5}
+
+    def format_result(self, result: dict) -> str:
+        if "error" in result:
+            return result["error"]
+        return "\n".join(f"{k} = {v:.6g}" for k, v in result.items() if k != "name") + "\n"
 
 
 def open_window(parent) -> None:
