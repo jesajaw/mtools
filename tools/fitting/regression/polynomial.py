@@ -118,6 +118,7 @@ class ToolWindow(ComputeToolWindow):
         self._degree = 2
         super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=RESULT_FORMAT)
 
+
     def _build_extra(self, parent) -> None:
         self.mode_cell = make_mode_cell(
             parent,
@@ -129,7 +130,8 @@ class ToolWindow(ComputeToolWindow):
         self.mode_cell.pack(fill="x", pady=(0, 8))
 
     def _cycle_degree(self) -> None:
-        self.output.set_text(self._degree +1 if self._degree < 13 else 2)
+        self._degree = self._degree + 1 if self._degree < 13 else 2
+        self.mode_cell.set_text(f"Degree: {self._degree}")
 
 
     def compute(self, data) -> dict:
