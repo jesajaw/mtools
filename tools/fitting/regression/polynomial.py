@@ -12,6 +12,7 @@ see the project's git history) with an actual surface fit.
 """
 
 import tools.mathlib as t
+from . import _points
 from theme.widgets import ComputeToolWindow
 
 TOOL_NAME = "Polynomial"
@@ -19,6 +20,8 @@ TOOL_DESCRIPTION = (
     "Quadratic fit y = c0 + c1*x + c2*x^2 (2D), or quadratic surface "
     "z = c0 + c1*x + c2*y + c3*x^2 + c4*x*y + c5*y^2 (3D)."
 )
+TOOL_INSTRUCTIONS = "Load (x, y) or (x, y, z) points via the main window, then click Compute and after that, save or visualize as you wish."
+RESULT_FORMAT = "y = c0 + c1*x + c2*x^2  ||  z = c0 + c1*x + c2*y + c3*x^2 + c4*x*y + c5*y^2"
 
 
 def _fit_2d(x, y):
@@ -37,23 +40,31 @@ def _fit_3d_surface(x, y, z):
     return t.least_squares_fit(design, z)
 
 
-def process(points):
-    n, d, x, y, z = t.split_points(points)
-    if not y:
-        y = list(range(n))
-    if not z:
-        return _fit_2d(x, y)
-    return _fit_3d_surface(x, y, z)
+def process(data):
+    n, d, x, y, z = _points.split_data(data)
+    try:
+        if not y:
+            y = list(range(n))
+        if not z:
+            return _fit_2d(x, y)
+        return _fit_3d_surface(x, y, z)
+    except Exception as e:
+        return e
 
 
 class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
-        super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
+        super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=RESULT_FORMAT)
 
     def compute(self, data):
-        return process(data)
+        result = process(data)
+        if isinstance(result, Exception):
+            return {"error": str(result)}
+        return result
 
     def format_result(self, result) -> str:
+        if isinstance(result, dict):
+            return result["error"]
         if len(result) == 3:
             c0, c1, c2 = result
             return f"c0 = {c0:.6g}\nc1 = {c1:.6g}\nc2 = {c2:.6g}\n"

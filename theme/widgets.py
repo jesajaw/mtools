@@ -20,7 +20,6 @@ class Cell(ttk.Frame):
     - on_click: leave it out for a plain, inert status tile (no hover, no click cursor, nothing bound)
     - extra_button: render an extra button (text, command) in the cell's corner
     """
-
     def __init__(self, parent, title: str, on_click=None, status_text: str | None = None, width: int = style.CELL_WIDTH, height: int = style.CELL_HEIGHT, extra_button=None):
         super().__init__(parent, padding=8, relief="groove", style="Cell.TFrame")
         wraplength = width - 20
@@ -49,6 +48,8 @@ class Cell(ttk.Frame):
             text, command = extra_button
             ttk.Button(self, text=text, command=command).pack(anchor="e")
 
+        self.bind("<Configure>", self._on_resize)
+
     def set_status(self, text: str) -> None:
         if self.status_label is not None:
             self.status_label.configure(text=text)
@@ -68,6 +69,13 @@ class Cell(ttk.Frame):
         self.title_label.configure(style="CellTitle.TLabel")
         if self.status_label is not None:
             self.status_label.configure(style="Status.TLabel")
+
+    def _on_resize(self, event) -> None:
+        # Keep text reflowing with the cell's actual rendered width, not just its initial size.
+        wrap = max(event.width - 20, 20)
+        self.title_label.configure(wraplength=wrap)
+        if self.status_label is not None:
+            self.status_label.configure(wraplength=wrap)
 
 
 class ToolWindow(tk.Toplevel):
@@ -130,7 +138,9 @@ class ComputeToolWindow(ToolWindow):
         super().__init__(parent, title=title, size=size)
         self._last_result = None
 
-        ttk.Label(self.content, text=instructions, style="Status.TLabel", wraplength=380, justify="left").pack(anchor="w", pady=(0, 8))
+        self._instructions_label = ttk.Label(self.content, text=instructions, style="Status.TLabel", wraplength=380, justify="left")
+        self._instructions_label.pack(anchor="w", pady=(0, 8), fill="x")
+        self._instructions_label.bind("<Configure>", self._on_instructions_resize)
 
         self._build_extra(self.content)
 
@@ -148,6 +158,9 @@ class ComputeToolWindow(ToolWindow):
         Cell(btn_row, "Compute", on_click=self.run, height=40, width=80).pack(side="left", fill="x", expand=True, padx=(4, 0))
 
         self._size_to_content()
+
+    def _on_instructions_resize(self, event) -> None:
+        self._instructions_label.configure(wraplength=max(event.width - 4, 20))
 
     def _visualize(self) -> None:
         """Placeholder"""
@@ -211,3 +224,26 @@ class ComputeToolWindow(ToolWindow):
             source_tool=self.title(),
         ))
         self._render_data_row()
+
+def make_mode_cell(parent, modes: list[tuple], on_change=None, label_prefix: str = "Mode: ", width: int = style.CELL_WIDTH, height: int = style.CELL_HEIGHT) -> Cell:
+    if not modes:
+        raise ValueError("make_mode_cell needs at least one mode")
+    state = {"index": 0}
+
+    def title_for(i: int) -> str:
+        return f"{label_prefix}{modes[i][1]}"
+
+    def status_for(i: int) -> str | None:
+        entry = modes[i]
+        return entry[2] if len(entry) > 2 else None
+
+    def cycle() -> None:
+        state["index"] = (state["index"] + 1) % len(modes)
+        cell.title_label.configure(text=title_for(state["index"]))
+        cell.set_status(status_for(state["index"]) or "")
+        if on_change is not None:
+            on_change(cell.mode())
+
+    cell = Cell(parent, title=title_for(0), on_click=cycle, status_text=status_for(0), width=width, height=height)
+    cell.mode = lambda: modes[state["index"]][0]
+    return cell

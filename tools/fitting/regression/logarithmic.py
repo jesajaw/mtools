@@ -13,7 +13,7 @@ Interesting: https://articles.outlier.org/logarithmic-regression
 
 import tools.mathlib as t
 from . import _points
-from theme.widgets import ComputeToolWindow, Cell
+from theme.widgets import ComputeToolWindow, make_mode_cell
 
 TOOL_NAME = "Logarithmic"
 TOOL_DESCRIPTION = "Least-squares logarithmic fit -- linear-log, log-linear, or log-log."
@@ -27,9 +27,9 @@ _MODE_LABELS = {
 _MODE_ORDER = ["linear_log", "log_linear", "log_log"]
 
 _RESULT_FORMATS = {
-    "linear_log": "y = a + b*ln(x)  ||  z = a + b*ln(x) + c*ln(y)",
-    "log_linear": "ln(y) = a + b*x  ||  ln(z) = a + b*x + c*y",
-    "log_log": "ln(y) = a + b*ln(x)  ||  ln(z) = a + b*ln(x) + c*ln(y)",
+    "linear_log": "y = a + b*ln(x) \n z = a + b*ln(x) + c*ln(y)",
+    "log_linear": "ln(y) = a + b*x \n ln(z) = a + b*x + c*y",
+    "log_log": "ln(y) = a + b*ln(x) \n ln(z) = a + b*ln(x) + c*ln(y)",
 }
 
 CELL_MODE_WIDTH = 400
@@ -105,29 +105,27 @@ def process(data, mode):
 
 class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
-        self._mode_index = 0
         super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=_RESULT_FORMATS[_MODE_ORDER[0]])
 
     def _build_extra(self, parent) -> None:
-        self._mode_cell = Cell(parent, self._mode_title(), on_click=self._cycle_mode, status_text="click to switch mode", width=CELL_MODE_WIDTH, height=CELL_MODE_HEIGHT)
-        self._mode_cell.pack(fill="x", pady=(0, 8))
+        self.mode_cell = make_mode_cell(
+            parent,
+            modes=[(key, _MODE_LABELS[key]) for key in _MODE_ORDER],
+            on_change=self._on_mode_change,
+            width=CELL_MODE_WIDTH,
+            height=CELL_MODE_HEIGHT,
+        )
+        self.mode_cell.pack(fill="x", pady=(0, 8))
 
-    def _mode_title(self) -> str:
-        return f"Mode: {_MODE_LABELS[_MODE_ORDER[self._mode_index]]}"
-
-    def _cycle_mode(self) -> None:
-        self._mode_index = (self._mode_index + 1) % len(_MODE_ORDER)
-        mode = _MODE_ORDER[self._mode_index]
-        self._mode_cell.title_label.configure(text=self._mode_title())
+    def _on_mode_change(self, mode: str) -> None:
         self.output.set_text(_RESULT_FORMATS[mode])
 
     def compute(self, data) -> dict:
-        mode = _MODE_ORDER[self._mode_index]
+        mode = self.mode_cell.mode()
         result = process(data, mode)
         if isinstance(result, Exception):
             return {"error": str(result)}
         return result
-
 
 def open_window(parent) -> None:
     ToolWindow(parent)
