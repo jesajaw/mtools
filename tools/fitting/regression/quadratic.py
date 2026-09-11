@@ -9,7 +9,7 @@ polynomial._fit_2d() instead of duplicating the math.
 """
 
 import tools.mathlib as t
-from tools.fitting import polynomial
+from . import polynomial
 from theme.widgets import ComputeToolWindow
 
 TOOL_NAME = "Quadratic"
