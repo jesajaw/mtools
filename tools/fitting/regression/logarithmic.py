@@ -105,27 +105,29 @@ def process(data, mode):
 
 class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
-        super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=_RESULT_FORMATS[_MODE_ORDER[0]])
+        self._degree = 1
+        super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=RESULT_FORMAT)
 
     def _build_extra(self, parent) -> None:
         self.mode_cell = make_mode_cell(
             parent,
-            modes=[(key, _MODE_LABELS[key]) for key in _MODE_ORDER],
-            on_change=self._on_mode_change,
-            width=CELL_MODE_WIDTH,
-            height=CELL_MODE_HEIGHT,
+            modes=[(d, str(d)) for d in range(1, MAX_DEGREE + 1)],
+            on_change=self._on_degree_change,
+            label_prefix="Degree: ",
+            height=40,
         )
         self.mode_cell.pack(fill="x", pady=(0, 8))
 
-    def _on_mode_change(self, mode: str) -> None:
-        self.output.set_text(_RESULT_FORMATS[mode])
-
+    def _on_degree_change(self, degree: int) -> None:
+        self._degree = degree
+"""
     def compute(self, data) -> dict:
         mode = self.mode_cell.mode()
         result = process(data, mode)
         if isinstance(result, Exception):
             return {"error": str(result)}
         return result
+        """
 
 def open_window(parent) -> None:
     ToolWindow(parent)
