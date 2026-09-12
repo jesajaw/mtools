@@ -192,9 +192,8 @@ class ComputeToolWindow(ToolWindow):
     # -- compute / result -------------------------------------------
 
     def compute(self, dataset) -> dict:
-        return process(_points.dataset_to_points(dataset))
-        # Override: turn the workspace data into a result (any type -- format_result() below turns it into display text)
-        #raise NotImplementedError
+        # Override: turn the workspace data into a result
+        raise NotImplementedError
 
     def format_result(self, result) -> str:
         # Override if the result needs custom formatting. Default: plain str(result).

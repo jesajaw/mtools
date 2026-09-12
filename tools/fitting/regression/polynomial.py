@@ -1,40 +1,14 @@
 """
-Polynomial regression tool: a general-degree least-squares fit,
-y = c0 + c1*x + ... + cn*x^n (2D). 3D extends the exact same
-structure additively across both variables:
-z = c0 + c1*x + ... + cn*x^n + d1*y + ... + dn*y^n -- no cross terms
-(no x*y, x^2*y, ...), just the same 1D polynomial applied to x and
-to y separately and summed. Degree is adjustable in the tool window
-(click the Degree cell to cycle 1..MAX_DEGREE).
+Polynomial regression tool: a general-degree least-squares fit, y = c0 + c1*x + ... + cn*x^n (2D).
+3D extends the exact same structure additively across both variables: z = c0 + c1*x + ... + cn*x^n + d1*y + ... + dn*y^n -- no cross terms (no x*y, x^2*y, ...), just the same 1D polynomial applied to x and to y separately and summed.
+Degree is adjustable in the tool window (click the Degree cell to cycle 1..MAX_DEGREE).
 
-A raw Vandermonde matrix (columns 1, x, x^2, ..., x^n) becomes
-severely ill-conditioned past roughly degree 10-15 -- x^20 and x^1
-differ by many orders of magnitude for any x not extremely close to
-+-1, so the normal equations silently lose precision (observed:
-~1-2% drift in the low-order coefficients at degree 20 for x in
-[0, 50], worse for wider ranges). Both fits therefore solve in a
-centered/scaled variable u = (x - mean(x)) / scale first, then
-re-expand the result back into plain coefficients of x via the
-binomial theorem (_reexpand) -- the returned c_k still mean exactly
-what the docstring above says, just computed on stable footing.
+A raw Vandermonde matrix (columns 1, x, x^2, ..., x^n) becomes severely ill-conditioned past roughly degree 10-15 -- x^20 and x^1
+differ by many orders of magnitude for any x not extremely close to +-1, so the normal equations silently lose precision (observed: ~1-2% drift in the low-order coefficients at degree 20 for x in [0, 50], worse for wider ranges). Both fits therefore solve in a centered/scaled variable u = (x - mean(x)) / scale first, then re-expand the result back into plain coefficients of x via the binomial theorem (_reexpand) -- the returned c_k still mean exactly what the docstring above says, just computed on stable footing.
 
-That fix only pushes the problem back so far, though: the normal
-equations (mathlib.least_squares_fit solves A^T A c = A^T b, which
-squares the condition number of A) stay inherently unreliable well
-past degree ~12-15 no matter how the input is scaled -- verified
-down to ~1e-11 drift at degree 10, but still ~1e-4 relative drift
-(and occasional outright singular-matrix failures on sparser data)
-at degree 20. MAX_DEGREE is capped at 12 to stay inside the range
-this was actually confirmed accurate in, rather than advertise a
-degree the current (normal-equations) solver can't reliably back up.
-A QR- or SVD-based solver would lift that ceiling, but that's a
-separate, larger piece of numerical linear algebra to add to
-mathlib.py, not a small tweak here.
+That fix only pushes the problem back so far, though: the normal equations (mathlib.least_squares_fit solves A^T A c = A^T b, which squares the condition number of A) stay inherently unreliable well past degree ~12-15 no matter how the input is scaled --  erified down to ~1e-11 drift at degree 10, but still ~1e-4 relative drift (and occasional outright singular-matrix failures on sparser data) at degree 20. MAX_DEGREE is capped at 12 to stay inside the range this was actually confirmed accurate in, rather than advertise a degree the current (normal-equations) solver can't reliably back up. A QR- or SVD-based solver would lift that ceiling, but that's a separate, larger piece of numerical linear algebra to add to mathlib.py, not a small tweak here.
 
-Needs at least (degree + 1) points for 2D, or (2*degree + 1) points
-for 3D -- fewer than that makes the normal-equations matrix singular
-(mathlib.solve_gauss raises a clear error in that case rather than
-silently misfitting).
+Needs at least (degree + 1) points for 2D, or (2*degree + 1) points for 3D -- fewer than that makes the normal-equations matrix singular (mathlib.solve_gauss raises a clear error in that case rather than silently misfitting).
 """
 
 import math
@@ -46,7 +20,7 @@ from theme.widgets import ComputeToolWindow, make_mode_cell
 TOOL_NAME = "Polynomial"
 TOOL_DESCRIPTION = "Least-squares polynomial fit, any degree: y = c0 + c1*x + ... + cn*x^n (2D), or z = c0 + c1*x + ... + cn*x^n + d1*y + ... + dn*y^n (3D)."
 TOOL_INSTRUCTIONS = "Click the Degree cell to pick a degree, load (x, y) or (x, y, z) points via the main window, then click Compute and after that, save or visualize as you wish."
-RESULT_FORMAT = "y = c0 + c1*x + ... + cn*x^n  ||  z = c0 + c1*x + ... + cn*x^n + d1*y + ... + dn*y^n"
+RESULT_FORMAT = "y = c0 + c1*x + ... + cn*x^n  \n  z = c0 + c1*x + ... + cn*x^n + d1*y + ... + dn*y^n"
 
 CELL_MODE_WIDTH = 400
 CELL_MODE_HEIGHT = 40
@@ -115,24 +89,21 @@ def process(data, degree):
 
 class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
-        self._degree = 2
+        self._degree = 1
         super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=RESULT_FORMAT)
-
 
     def _build_extra(self, parent) -> None:
         self.mode_cell = make_mode_cell(
             parent,
-            modes=f"Degree: {self._degree}",
-            on_change=self._cycle_degree,
-            width=CELL_MODE_WIDTH,
-            height=CELL_MODE_HEIGHT,
+            modes=[(d, str(d)) for d in range(1, MAX_DEGREE + 1)],
+            on_change=self._on_degree_change,
+            label_prefix="Degree: ",
+            height=40,
         )
         self.mode_cell.pack(fill="x", pady=(0, 8))
 
-    def _cycle_degree(self) -> None:
-        self._degree = self._degree + 1 if self._degree < 13 else 2
-        self.mode_cell.set_text(f"Degree: {self._degree}")
-
+    def _on_degree_change(self, degree: int) -> None:
+        self._degree = degree
 
     def compute(self, data) -> dict:
         result = process(data, self._degree)
