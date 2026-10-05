@@ -1,6 +1,8 @@
 from typing import Tuple, List, Optional
 
 def split_data(data)-> Tuple[int, int, List[float], List[float], Optional[List[float]]]:
+    if hasattr(data, "axes"):  # a DataSet from the workspace -> plain points
+        data = dataset_to_points(data)
     if not data or isinstance(data[0], (str, int, float)):
         return len(data), 1, [float(p) for p in data], None, None
         

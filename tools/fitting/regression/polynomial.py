@@ -15,6 +15,7 @@ import math
 
 import tools.mathlib as t
 from . import _points
+from data import results
 from theme.widgets import ComputeToolWindow, make_mode_cell
 
 TOOL_NAME = "Polynomial"
@@ -75,16 +76,8 @@ def _fit_3d_surface(x, y, z, degree):
     return [a[0] + cx[0] + cy[0]] + cx[1:] + cy[1:]
 
 
-def process(data, degree):
-    n, d, x, y, z = _points.split_data(data)
-    try:
-        if not y:
-            y = list(range(n))
-        if not z:
-            return False, _fit_2d(x, y, degree)
-        return True, _fit_3d_surface(x, y, z, degree)
-    except Exception as e:
-        return e
+def _terms(coef, var, degree):
+    return [f"{coef}{k}*{var}" if k == 1 else f"{coef}{k}*{var}^{k}" for k in range(1, degree + 1)]
 
 
 class ToolWindow(ComputeToolWindow):
@@ -105,27 +98,23 @@ class ToolWindow(ComputeToolWindow):
     def _on_degree_change(self, degree: int) -> None:
         self._degree = degree
 
-    def compute(self, data) -> dict:
-        result = process(data, self._degree)
-        if isinstance(result, Exception):
-            return {"error": str(result)}
-        is_3d, coeffs = result
-        out = {"name": TOOL_NAME, "degree": self._degree}
-        if not is_3d:
-            for k, c in enumerate(coeffs):
-                out[f"c{k}"] = c
-            return out
-        out["c0"] = coeffs[0]
-        for k in range(1, self._degree + 1):
-            out[f"cx{k}"] = coeffs[k]
-        for k in range(1, self._degree + 1):
-            out[f"cy{k}"] = coeffs[self._degree + k]
-        return out
-
-    def format_result(self, result: dict) -> str:
-        if "error" in result:
-            return result["error"]
-        return "\n".join(f"{k} = {v:.6g}" for k, v in result.items() if k not in ("name", "degree")) + "\n"
+    def compute(self, dataset):
+        n, d, x, y, z = _points.split_data(dataset)
+        deg = self._degree
+        if not y:
+            y = list(range(n))
+        if not z:
+            c = _fit_2d(x, y, deg)
+            fitted = [sum(ck * xi ** k for k, ck in enumerate(c)) for xi in x]
+            equation = "y = " + " + ".join(["c0"] + _terms("c", "x", deg))
+            return results.fit_dataset(dataset, TOOL_NAME, equation, {f"c{k}": ck for k, ck in enumerate(c)}, response=y, fitted=fitted, metadata={"dimension": 2, "degree": deg})
+        c = _fit_3d_surface(x, y, z, deg)
+        params = {"c0": c[0]}
+        params.update({f"cx{k}": c[k] for k in range(1, deg + 1)})
+        params.update({f"cy{k}": c[deg + k] for k in range(1, deg + 1)})
+        fitted = [c[0] + sum(c[k] * xi ** k for k in range(1, deg + 1)) + sum(c[deg + k] * yi ** k for k in range(1, deg + 1)) for xi, yi in zip(x, y)]
+        equation = "z = " + " + ".join(["c0"] + _terms("cx", "x", deg) + _terms("cy", "y", deg))
+        return results.fit_dataset(dataset, TOOL_NAME, equation, params, response=z, fitted=fitted, metadata={"dimension": 3, "degree": deg})
 
 
 def open_window(parent) -> None:

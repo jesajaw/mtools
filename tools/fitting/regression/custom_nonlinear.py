@@ -5,6 +5,8 @@ Custom non-linear curve fitting tool. Fits an arbitrary user-supplied model y = 
 import math
 
 import tools.mathlib as t
+from . import _points
+from data import results
 from theme.widgets import ComputeToolWindow
 
 TOOL_NAME = "Custom Non-linear Fit"
@@ -109,7 +111,7 @@ class ToolWindow(ComputeToolWindow):
     default_size = "480x540"
 
     def __init__(self, parent):
-        super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
+        super().__init__(parent, title=TOOL_NAME, instructions=TOOL_DESCRIPTION)
 
     def _build_extra(self, parent) -> None:
         from tkinter import ttk
@@ -136,8 +138,8 @@ class ToolWindow(ComputeToolWindow):
         self.guess_entry.insert(0, "1, 1, 1")
         self.guess_entry.grid(row=2, column=1, sticky="ew", padx=(6, 0), pady=(6, 0))
 
-    def compute(self, data):
-        n, d, x, y, z = t.split_points(data)
+    def compute(self, dataset):
+        n, d, x, y, z = _points.split_data(dataset)
         if not y:
             raise ValueError("Custom non-linear fit needs (x, y) pairs, not a single column.")
         if z:
@@ -155,15 +157,9 @@ class ToolWindow(ComputeToolWindow):
         except Exception as e:
             raise ValueError(f"Could not evaluate the formula: {e}")
 
-        params, cost = fit_nonlinear(f, x, y, p0)
-        return param_names, params, cost, d
-
-    def format_result(self, result) -> str:
-        param_names, params, cost, d = result
-        lines = [f"{name} = {value:.6g}" for name, value in zip(param_names, params)]
-        lines.append(f"sum of squared residuals = {cost:.6g}")
-        lines.append(f"dimension = {d}")
-        return "\n".join(lines) + "\n"
+        params, _cost = fit_nonlinear(f, x, y, p0)
+        fitted = [f(xi, params) for xi in x]
+        return results.fit_dataset(dataset, TOOL_NAME, f"y = {expression}", dict(zip(param_names, params)), response=y, fitted=fitted, metadata={"dimension": 2, "formula": expression})
 
 
 def open_window(parent) -> None:

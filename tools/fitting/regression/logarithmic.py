@@ -11,8 +11,11 @@ logarithm is applied:
 Interesting: https://articles.outlier.org/logarithmic-regression
 """
 
+import math
+
 import tools.mathlib as t
 from . import _points
+from data import results
 from theme.widgets import ComputeToolWindow, make_mode_cell
 
 TOOL_NAME = "Logarithmic"
@@ -44,7 +47,10 @@ def _require_positive(*columns):
 def _fit_line(u, v):
     """Ordinary least-squares line v = a + b*u -- shared by every 2D mode, just fed different (u, v)."""
     n = len(u)
-    b = (n * t.sum_list(t.products(u, v)) - t.sum_list(u) * t.sum_list(v)) / (n * t.sum_list(t.square(u)) - t.sum_list(u) ** 2)
+    denom = n * t.sum_list(t.square(u)) - t.sum_list(u) ** 2
+    if denom == 0:
+        raise ValueError("All (transformed) x-values are identical -- the slope is undefined.")
+    b = (n * t.sum_list(t.products(u, v)) - t.sum_list(u) * t.sum_list(v)) / denom
     cu, cv = t.mean([u, v])
     a = cv - b * cu
     return a, b
@@ -87,47 +93,57 @@ def _transform(mode, x, y, z=None):
     return t.log(x), t.log(y), t.log(z)
 
 
-def process(data, mode):
-    n, d, x, y, z = _points.split_data(data)
-    try:
-        if not y:
-            y = list(range(n))
-        if not z:
-            u, _unused, v = _transform(mode, x, y)
-            a, b = _fit_line(u, v)
-            return {"name": TOOL_NAME, "mode": mode, "dimension": d, "a": a, "b": b}
-        u1, u2, v = _transform(mode, x, y, z)
-        a, b, c = _fit_plane(u1, u2, v)
-        return {"name": TOOL_NAME, "mode": mode, "dimension": d, "a": a, "b": b, "c": c}
-    except Exception as e:
-        return e
+def _fitted(mode, params, x, y=None):
+    """Model values in ORIGINAL units for the fitted (a, b[, c]) of a mode."""
+    if y is None:
+        a, b = params
+        if mode == "linear_log":
+            return [a + b * math.log(xi) for xi in x]
+        if mode == "log_linear":
+            return [math.exp(a + b * xi) for xi in x]
+        return [math.exp(a + b * math.log(xi)) for xi in x]
+    a, b, c = params
+    if mode == "linear_log":
+        return [a + b * math.log(xi) + c * math.log(yi) for xi, yi in zip(x, y)]
+    if mode == "log_linear":
+        return [math.exp(a + b * xi + c * yi) for xi, yi in zip(x, y)]
+    return [math.exp(a + b * math.log(xi) + c * math.log(yi)) for xi, yi in zip(x, y)]
 
 
 class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
-        self._degree = 1
-        super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=RESULT_FORMAT)
+        super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=_RESULT_FORMATS["linear_log"])
 
     def _build_extra(self, parent) -> None:
         self.mode_cell = make_mode_cell(
             parent,
-            modes=[(d, str(d)) for d in range(1, MAX_DEGREE + 1)],
-            on_change=self._on_degree_change,
-            label_prefix="Degree: ",
-            height=40,
+            modes=[(m, _MODE_LABELS[m]) for m in _MODE_ORDER],
+            on_change=self._on_mode_change,
+            label_prefix="Mode: ",
+            height=CELL_MODE_HEIGHT,
         )
         self.mode_cell.pack(fill="x", pady=(0, 8))
 
-    def _on_degree_change(self, degree: int) -> None:
-        self._degree = degree
-"""
-    def compute(self, data) -> dict:
+    def _on_mode_change(self, mode: str) -> None:
+        self.output.set_text(_RESULT_FORMATS[mode])
+
+    def compute(self, dataset):
         mode = self.mode_cell.mode()
-        result = process(data, mode)
-        if isinstance(result, Exception):
-            return {"error": str(result)}
-        return result
-        """
+        n, d, x, y, z = _points.split_data(dataset)
+        if not y:
+            y = list(range(n))
+        eq2, eq3 = [line.strip() for line in _RESULT_FORMATS[mode].split("\n")]
+        meta = {"mode": mode}
+        if mode != "linear_log":
+            meta["fit_space"] = "fitted on ln(response); fit/residual are in original units"
+        if not z:
+            u, _unused, v = _transform(mode, x, y)
+            a, b = _fit_line(u, v)
+            return results.fit_dataset(dataset, TOOL_NAME, eq2, {"a": a, "b": b}, response=y, fitted=_fitted(mode, (a, b), x), metadata={**meta, "dimension": 2})
+        u1, u2, v = _transform(mode, x, y, z)
+        a, b, c = _fit_plane(u1, u2, v)
+        return results.fit_dataset(dataset, TOOL_NAME, eq3, {"a": a, "b": b, "c": c}, response=z, fitted=_fitted(mode, (a, b, c), x, y), metadata={**meta, "dimension": 3})
+
 
 def open_window(parent) -> None:
     ToolWindow(parent)

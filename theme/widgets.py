@@ -7,10 +7,10 @@ Reusable building blocks for tool windows, so each tool's ui doesn't have to reb
 """
 
 import tkinter as tk
-from tkinter import ttk
-from data import store
+from tkinter import ttk, filedialog
+from data import store, savers, results
 from . import style, dialogs
-from data.dataset import DataSet, DataArray
+from data.dataset import DataSet
 
 class Cell(ttk.Frame):
     """
@@ -128,15 +128,17 @@ class ComputeToolWindow(ToolWindow):
     result_format is shown in the result area before the first compute(), as a dummy/template of what the real result will look like (e.g. "y = a*x^n + b*x^2 + ... + c") -- both are meant to be passed through from a tool's own TOOL_INSTRUCTIONS/
     RESULT_FORMAT module constants, alongside TOOL_NAME/TOOL_DESCRIPTION.
 
-    After a successful compute(), "Send result to workspace" becomes available -- click it to make this tool's result the input for whatever tool you open next (e.g. AFM Geometry -> Analysis).
+    compute() returns a DataSet; run() puts it into the shared workspace automatically (replacing this window's previous result), so whatever tool you open next works on it (e.g. AFM Geometry -> Analysis). "Save" exports it as CSV.
     "Visualize" is a placeholder for now -- not wired up to anything yet.
 
     The window is sized to fit its own content (_size_to_content(), called at the end of __init__) rather than a fixed guessed size -- tools that add extra widgets via _build_extra() (e.g. custom non-linear fit's formula/parameter fields) don't need to pass their own size string, the window just grows to fit.
     """
 
-    def __init__(self, parent, title: str, instructions: str = "", result_format: str = "", size: str = "420x360"):
+    def __init__(self, parent, title: str, instructions: str = "", result_format: str = "", size: str = "420x360", description: str = ""):
         super().__init__(parent, title=title, size=size)
+        instructions = instructions or description  # README / template pass `description=`
         self._last_result = None
+        self._last_input = None  # the DataSet _last_result was computed from
 
         self._instructions_label = ttk.Label(self.content, text=instructions, style="Status.TLabel", wraplength=380, justify="left")
         self._instructions_label.pack(anchor="w", pady=(0, 8), fill="x")
@@ -147,6 +149,8 @@ class ComputeToolWindow(ToolWindow):
         self._data_row = ttk.Frame(self.content)
         self._data_row.pack(fill="x", pady=(0, 8))
         self._render_data_row()
+        store.subscribe(self._render_data_row)  # status follows the workspace, also when this window's own result lands in it
+        self.bind("<Destroy>", self._on_destroy)
 
         self.output = ResultDisplay(self.content, initial_text=result_format)
         self.output.pack(fill="x", pady=(0, 8))
@@ -158,6 +162,10 @@ class ComputeToolWindow(ToolWindow):
         Cell(btn_row, "Compute", on_click=self.run, height=40, width=80).pack(side="left", fill="x", expand=True, padx=(4, 0))
 
         self._size_to_content()
+
+    def _on_destroy(self, event) -> None:
+        if event.widget is self:
+            store.unsubscribe(self._render_data_row)
 
     def _on_instructions_resize(self, event) -> None:
         self._instructions_label.configure(wraplength=max(event.width - 4, 20))
@@ -191,38 +199,53 @@ class ComputeToolWindow(ToolWindow):
 
     # -- compute / result -------------------------------------------
 
-    def compute(self, dataset) -> dict:
-        # Override: turn the workspace data into a result
+    def compute(self, dataset: DataSet) -> DataSet:
+        # Override: turn the workspace DataSet into a result DataSet (for fits see data/results.fit_dataset). The base class puts it back into the workspace -- tools never format or store anything themselves.
         raise NotImplementedError
 
-    def format_result(self, result) -> str:
-        # Override if the result needs custom formatting. Default: plain str(result).
-        return str(result)
+    def format_result(self, result: DataSet) -> str:
+        # Generic rendering of the result DataSet (equation, parameters, statistics) -- override only if a tool genuinely needs something else.
+        return results.summarize(result)
 
     def run(self) -> None:
         if not store.is_loaded():
             dialogs.show_error(self, "No data", "Please load data via the main window first.")
             return
+        source = store.get()
+        if source is self._last_result and self._last_input is not None:
+            source = self._last_input  # re-compute works on the original input, not on this window's own previous result
         try:
-            result = self.compute(store.get())
+            result = self.compute(source)
         except Exception as e:
             dialogs.show_error(self, "Computation failed", str(e))
             return
         if type(result) == str:
             return dialogs.show_error(self, "Computation failed", result)
+        if not isinstance(result, DataSet):
+            return dialogs.show_error(self, "Computation failed", f"compute() must return a DataSet, got {type(result).__name__}.")
 
+        if result.source_tool is None:
+            result.source_tool = self.title()
+        if self._last_result is None:
+            store.add(result)
+        else:
+            store.replace(self._last_result, result)  # re-compute in this window replaces its own previous result
         self._last_result = result
+        self._last_input = source
         self.output.set_text(self.format_result(result))
 
     def _save(self) -> None:
+        # Exports this window's result as CSV (the result is already in the workspace -- no manual "send" step)
         if self._last_result is None:
+            dialogs.show_error(self, "Nothing to save", "Compute a result first.")
             return
-        store.add(DataSet(
-            name=f"Output of {self.title()}",
-            data={k: DataArray(values=v, name=k) for k, v in self._last_result.items()},
-            source_tool=self.title(),
-        ))
-        self._render_data_row()
+        path = filedialog.asksaveasfilename(parent=self, title="Save result", defaultextension=".csv", filetypes=(("CSV", "*.csv"), ("All files", "*.*")))
+        if not path:
+            return
+        try:
+            savers.save_dataset_csv(path, self._last_result)
+        except Exception as e:
+            dialogs.show_error(self, "Save failed", str(e))
 
 def make_mode_cell(parent, modes: list[tuple], on_change=None, label_prefix: str = "Mode: ", width: int = style.CELL_WIDTH, height: int = style.CELL_HEIGHT) -> Cell:
     if not modes:

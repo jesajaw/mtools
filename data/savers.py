@@ -26,6 +26,14 @@ def save_dataset_csv(path: str, dataset) -> None:
     if not arrays:
         raise ValueError("Nothing to save -- this dataset has no arrays.")
     with open(path, "w", newline="", encoding="utf-8") as f:
+        md = dataset.metadata
+        if md.get("model"):  # fit result: keep model + parameters with the numbers (as '#' lines, which loaders.parse_points skips)
+            f.write(f"# model: {md['model']}\n")
+            if md.get("equation"):
+                f.write(f"# equation: {md['equation']}\n")
+            for a in dataset.annotations_of("parameter"):
+                f.write(f"# {a.name} = {a.data['value']!r}\n")
         writer = csv.writer(f)
+        writer.writerow([a.name for a in arrays])
         for row in zip(*(a.values for a in arrays)):
             writer.writerow(row)

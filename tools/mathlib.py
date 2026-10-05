@@ -27,7 +27,7 @@ def log(values):
     return [math.log(v) for v in values]
 
 def distance(p0, p1):
-    return square_root(
+    return math.sqrt(
         sum(
             (p0[i] - p1[i]) ** 2
                 for i in range(len(p0))
@@ -71,8 +71,11 @@ def power_iteration(C, iterations=100):
             C[1][0]*b[0] + C[1][1]*b[1] + C[1][2]*b[2],
             C[2][0]*b[0] + C[2][1]*b[1] + C[2][2]*b[2],
         ]
-    return [v / square_root((b_new[0]**2 + b_new[1]**2 + b_new[2]**2))
-            for v in b_new]
+        norm = math.sqrt(b_new[0]**2 + b_new[1]**2 + b_new[2]**2)
+        if norm == 0:
+            raise ValueError("Degenerate data -- all points coincide, no line direction.")
+        b = [v / norm for v in b_new]  # normalise every step, otherwise the vector over/underflows
+    return b
 
 def solve_3_3_Gauss(A, b):
     M = [

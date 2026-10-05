@@ -4,6 +4,7 @@ Multivariate regression tool: multiple linear regression with two predictors, z 
 
 import tools.mathlib as t
 from . import _points
+from data import results
 from theme.widgets import ComputeToolWindow
 
 TOOL_NAME = "Multivariate"
@@ -12,33 +13,18 @@ TOOL_INSTRUCTIONS = "Load (x, y, z) triples via the main window -- two predictor
 RESULT_FORMAT = "z = b0 + b1*x + b2*y"
 
 
-def process(data):
-    n, d, x, y, z = _points.split_data(data)
-    try:
-        if not y or not z:
-            raise ValueError("Multivariate fit needs (x, y, z) triples -- you may use Linear Regression.")
-        design = [[1.0, xi, yi] for xi, yi in zip(x, y)]
-        b0, b1, b2 = t.least_squares_fit(design, z)
-        return b0, b1, b2
-    except Exception as e:
-        return e
-
-
 class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
         super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=RESULT_FORMAT)
 
-    def compute(self, data) -> dict:
-        result = process(data)
-        if isinstance(result, Exception):
-            return {"error": str(result)}
-        b0, b1, b2 = result
-        return {"name": TOOL_NAME, "b0": b0, "b1": b1, "b2": b2}
-
-    def format_result(self, result: dict) -> str:
-        if "error" in result:
-            return result["error"]
-        return "\n".join(f"{k} = {v:.6g}" for k, v in result.items() if k != "name") + "\n"
+    def compute(self, dataset):
+        n, d, x, y, z = _points.split_data(dataset)
+        if not y or not z:
+            raise ValueError("Multivariate fit needs (x, y, z) triples -- you may use Linear Regression.")
+        design = [[1.0, xi, yi] for xi, yi in zip(x, y)]
+        b0, b1, b2 = t.least_squares_fit(design, z)
+        fitted = [b0 + b1 * xi + b2 * yi for xi, yi in zip(x, y)]
+        return results.fit_dataset(dataset, TOOL_NAME, "z = b0 + b1*x + b2*y", {"b0": b0, "b1": b1, "b2": b2}, response=z, fitted=fitted, metadata={"dimension": 3})
 
 
 def open_window(parent) -> None:

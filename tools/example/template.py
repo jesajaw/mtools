@@ -14,7 +14,8 @@ class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
         super().__init__(parent, title=TOOL_NAME, description=TOOL_DESCRIPTION)
 
-    def compute(self, data):
+    def compute(self, dataset):
+        # dataset: the DataSet currently in the workspace. Return a DataSet -- for fits build it with data.results.fit_dataset(...); the base class puts it back into the workspace so the next tool can use it.
         raise NotImplementedError(
             "compute() is a placeholder -- implement your tool's logic here."
         )

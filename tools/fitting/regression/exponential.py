@@ -15,6 +15,7 @@ import math
 
 import tools.mathlib as t
 from . import _points
+from data import results
 from theme.widgets import ComputeToolWindow
 
 TOOL_NAME = "Exponential"
@@ -56,39 +57,22 @@ def _fit_exponential_3d(x, y, z):
     return math.exp(intercept), b, c
 
 
-def process(data):
-    n, d, x, y, z = _points.split_data(data)
-    try:
-        if not y:
-            y = list(range(n))
-        if not z:
-            a, b = _fit_exponential_2d(n, x, y)
-            return False, (a, b)
-        a, b, c = _fit_exponential_3d(x, y, z)
-        return True, (a, b, c)
-    except Exception as e:
-        return e
-
-
 class ToolWindow(ComputeToolWindow):
     def __init__(self, parent):
         super().__init__(parent, title=TOOL_NAME, instructions=TOOL_INSTRUCTIONS, result_format=RESULT_FORMAT)
 
-    def compute(self, data) -> dict:
-        result = process(data)
-        if isinstance(result, Exception):
-            return {"error": str(result)}
-        is_3d, coeffs = result
-        if not is_3d:
-            a, b = coeffs
-            return {"name": TOOL_NAME, "a": a, "b": b}
-        a, b, c = coeffs
-        return {"name": TOOL_NAME, "a": a, "b": b, "c": c}
-
-    def format_result(self, result: dict) -> str:
-        if "error" in result:
-            return result["error"]
-        return "\n".join(f"{k} = {v:.6g}" for k, v in result.items() if k != "name") + "\n"
+    def compute(self, dataset):
+        n, d, x, y, z = _points.split_data(dataset)
+        if not y:
+            y = list(range(n))
+        note = "fitted on ln(response); fit/residual are in original units"
+        if not z:
+            a, b = _fit_exponential_2d(n, x, y)
+            fitted = [a * math.exp(b * xi) for xi in x]
+            return results.fit_dataset(dataset, TOOL_NAME, "y = a*e^(b*x)", {"a": a, "b": b}, response=y, fitted=fitted, metadata={"dimension": 2, "fit_space": note})
+        a, b, c = _fit_exponential_3d(x, y, z)
+        fitted = [a * math.exp(b * xi + c * yi) for xi, yi in zip(x, y)]
+        return results.fit_dataset(dataset, TOOL_NAME, "z = a*e^(b*x + c*y)", {"a": a, "b": b, "c": c}, response=z, fitted=fitted, metadata={"dimension": 3, "fit_space": note})
 
 
 def open_window(parent) -> None:
