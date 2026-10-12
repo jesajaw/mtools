@@ -1,46 +1,39 @@
 # mtools
 
-A small tkinter framework around a collection of regression/analysis
-and mathematical scripts. Instead of calling each script separately,
-`main.py` opens a selection window; picking a tool opens that tool's
-own window with its inputs and outputs. There will be more tools over
-time.
+A small UI around a collection of regression/analysis and mathematical scripts. Instead of calling each script separately, `main.py` opens a selection window; picking a tool opens that tool's own window with its inputs and outputs.
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
 
-* **Central Launchpad (`main.py`):** Single entry point dashboard GUI for all integrated tools, grouped by category.
-* **Shared Workspace (`data/store.py`):** One "current data" slot for the whole app, loaded/saved/cleared exclusively via the Input/Output bar at the top of the main window -- every tool window just reads whatever's currently there, no per-tool file picker. A tool's result can be sent back to the workspace ("Send result to workspace"), so tools chain: e.g. run AFM Geometry, then feed its output straight into an analysis tool.
-* **Dynamic Discovery (`core/registry.py`):** Automatically scans and registers tools from `tools/<category>/<tool>.py` -- add a module, it shows up on next start.
-* **Modular Architecture:** Strict separation between computational logic and GUI code; shared GUI building blocks live in `theme/widgets.py`.
-* **Themes:** Centralized color palettes (`dark_purple`, `dark_blue`, `black_white`) and font presets (`segoe`, `system`) in `theme/style.py`, Windows dark-titlebar/DPI-awareness handling included.
+* **Shared Workspace:** One "current data" slot for the whole app, loaded/saved/cleared exclusively via the Input/Output bar -- every tool just tries to read whatever's currently there.
+* **Dynamic Discovery:** Scans and registers tools from `tools/<category>/<tool>.py` -- add a module, it shows up on next start.
+* **Modular Architecture:** Strict separation between computational logic and UI.
+* **Themes:** Color schemas (`dark_purple`, `dark_blue`, `black_white`) and font presets (`segoe`, `system`) in `theme/style.py`.
 
-## Tools
-
-Status: **done** (real computation) / **placeholder** (GUI wired up, `compute()` not implemented yet).
+## Tools / todo!
 
 * **fitting/** -- regression & curve fitting
-  * Linear, Polynomial (2D quadratic + 3D quadratic surface), Quadratic, Exponential, Logarithmic, Multivariate, Custom Non-linear Fit -- done
+  * Linear, Polynomial (2D quadratic + 3D quadratic surface), Quadratic, Exponential, Logarithmic, Multivariate, Custom Non-linear Fit
 * **afm/** -- AFM data processing
-  * Geometry (rotate/mirror/crop/level), Filters & Defects, Roughness (ISO Ra/Rq), Grain Analysis -- placeholder
-* **ode/**, **pde/** -- differential equation solvers -- placeholder
+  * Geometry (rotate/mirror/crop/level), Filters & Defects, Roughness (ISO Ra/Rq), Grain Analysis
+* **ode/**, **pde/** -- differential equation solvers
 * **statistics/**
-  * Descriptive Statistics, Hypothesis Testing, Probability Distributions, Data Preprocessing, Confidence Intervals -- placeholder
-* **spectroscopy/** -- spectral analysis & peak fitting -- placeholder
-* **simulation/** -- Monte Carlo / SRIM-style physical modeling -- placeholder
-* **transformation/** -- FFT, frequency filtering, normalization, Laplace transform -- placeholder
+  * Descriptive Statistics, Hypothesis Testing, Probability Distributions, Data Preprocessing, Confidence Intervals
+* **spectroscopy/** -- spectral analysis & peak fitting
+* **simulation/** -- Monte Carlo / SRIM-style physical modeling
+* **transformation/** -- FFT, frequency filtering, normalization, Laplace transform
 * **optics/**
-  * Diffraction & Interference, Wavefront & Propagation -- placeholder
-* **units/** -- unit conversion & dimensional analysis -- placeholder
+  * Diffraction & Interference, Wavefront & Propagation
+* **units/** -- unit conversion & dimensional analysis
 * **linear_algebra/**
-  * Matrix Operations, Eigenvalues & Eigenvectors, Matrix Decomposition (LU/QR/SVD), Linear System Solver -- placeholder
+  * Matrix Operations, Eigenvalues & Eigenvectors, Matrix Decomposition (LU/QR/SVD), Linear System Solver
 * **interpolation/**
-  * Spline Interpolation, Polynomial Interpolation -- placeholder
+  * Spline Interpolation, Polynomial Interpolation
 * **optimization/**
-  * Root Finding, Minimization -- placeholder
-* **error_propagation/** -- uncertainty propagation through a computation chain -- placeholder
+  * Root Finding, Minimization
+* **error_propagation/** -- uncertainty propagation through a computation chain
 * **example/** -- reference template for new tools
 
 ## Structure
