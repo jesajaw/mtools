@@ -18,7 +18,7 @@ from . import _basic as b
 from . import _dist as dist
 from . import _ui
 from data import results
-from theme.widgets import ComputeToolWindow, ParameterBox
+from ui.widgets import ComputeToolWindow, ParameterBox
 
 TOOL_NAME = "Confidence Intervals"
 TOOL_DESCRIPTION = "Confidence intervals for a mean (t or z), variance, proportion, median, a difference of means and the parameters of a linear fit."

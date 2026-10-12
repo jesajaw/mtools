@@ -16,7 +16,7 @@ import math
 import tools.mathlib as t
 from . import _points
 from data import results
-from theme.widgets import ComputeToolWindow, make_mode_cell
+from ui.widgets import ComputeToolWindow, make_mode_cell
 
 TOOL_NAME = "Polynomial"
 TOOL_DESCRIPTION = "Least-squares polynomial fit, any degree: y = c0 + c1*x + ... + cn*x^n (2D), or z = c0 + c1*x + ... + cn*x^n + d1*y + ... + dn*y^n (3D)."
@@ -118,4 +118,4 @@ class ToolWindow(ComputeToolWindow):
 
 
 def open_window(parent) -> None:
-    ToolWindow(parent)
+    ToolWindow(parent)

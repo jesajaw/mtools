@@ -16,7 +16,7 @@ import math
 import tools.mathlib as t
 from . import _points
 from data import results
-from theme.widgets import ComputeToolWindow, make_mode_cell
+from ui.widgets import ComputeToolWindow, make_mode_cell
 
 TOOL_NAME = "Logarithmic"
 TOOL_DESCRIPTION = "Least-squares logarithmic fit -- linear-log, log-linear, or log-log."
@@ -146,4 +146,4 @@ class ToolWindow(ComputeToolWindow):
 
 
 def open_window(parent) -> None:
-    ToolWindow(parent)
+    ToolWindow(parent)

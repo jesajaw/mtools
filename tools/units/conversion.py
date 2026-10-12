@@ -2,7 +2,7 @@
 Unit Conversion -- not implemented yet.
 """
 
-from theme.widgets import ComputeToolWindow
+from ui.widgets import ComputeToolWindow
 
 TOOL_NAME = "Unit Conversion"
 TOOL_DESCRIPTION = "Convert between SI and imperial units, and custom unit definitions. -- not implemented yet."

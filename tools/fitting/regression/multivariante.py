@@ -5,7 +5,7 @@ Multivariate regression tool: multiple linear regression with two predictors, z 
 import tools.mathlib as t
 from . import _points
 from data import results
-from theme.widgets import ComputeToolWindow
+from ui.widgets import ComputeToolWindow
 
 TOOL_NAME = "Multivariate"
 TOOL_DESCRIPTION = "Least-squares multiple linear regression: z = b0 + b1*x + b2*y."
@@ -28,4 +28,4 @@ class ToolWindow(ComputeToolWindow):
 
 
 def open_window(parent) -> None:
-    ToolWindow(parent)
+    ToolWindow(parent)

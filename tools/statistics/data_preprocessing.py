@@ -21,7 +21,7 @@ from . import _basic as b
 from . import _ui
 from data import results
 from data.dataset import DataSet
-from theme.widgets import ComputeToolWindow, ParameterBox
+from ui.widgets import ComputeToolWindow, ParameterBox
 
 TOOL_NAME = "Data Preprocessing"
 TOOL_DESCRIPTION = "Standardize, scale, center, log-transform, smooth, sort or remove outliers -- the result becomes the new data for the next tool."

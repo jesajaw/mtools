@@ -9,7 +9,7 @@ import math
 from . import _basic as b
 from . import _ui
 from data import results
-from theme.widgets import ComputeToolWindow
+from ui.widgets import ComputeToolWindow
 
 TOOL_NAME = "Descriptive Statistics"
 TOOL_DESCRIPTION = "Central tendency (mean, median, mode), dispersion (variance, standard deviation, range, IQR) and shape (skewness, kurtosis) of every column."

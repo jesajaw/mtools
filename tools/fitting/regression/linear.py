@@ -1,7 +1,7 @@
 import tools.mathlib as t
 from . import _points
 from data import results
-from theme.widgets import ComputeToolWindow
+from ui.widgets import ComputeToolWindow
 
 TOOL_NAME = "Linear"
 TOOL_DESCRIPTION = "Linear line fit for 2D or 3D data."
@@ -50,4 +50,4 @@ class ToolWindow(ComputeToolWindow):
 
 
 def open_window(parent) -> None:
-    ToolWindow(parent)
+    ToolWindow(parent)

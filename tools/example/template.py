@@ -4,7 +4,7 @@ To start a new tool: copy this file into an existing or new category folder, adj
 """
 
 
-from theme.widgets import ComputeToolWindow
+from ui.widgets import ComputeToolWindow
 
 TOOL_NAME = "Example Tool"
 TOOL_DESCRIPTION = "Example DESCRIPTION"

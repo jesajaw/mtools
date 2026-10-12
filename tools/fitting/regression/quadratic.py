@@ -4,7 +4,7 @@ Quadratic regression tool: y = a*x^2 + b*x + c (2D), or z = a*x^2 + b*x + c + d*
 
 from . import _points, polynomial
 from data import results
-from theme.widgets import ComputeToolWindow
+from ui.widgets import ComputeToolWindow
 
 TOOL_NAME = "Quadratic"
 TOOL_DESCRIPTION = "Least-squares quadratic fit: y = a*x^2 + b*x + c (2D), or z = a*x^2 + b*x + c + d*y + e*y^2 (3D)."
@@ -32,4 +32,4 @@ class ToolWindow(ComputeToolWindow):
 
 
 def open_window(parent) -> None:
-    ToolWindow(parent)
+    ToolWindow(parent)

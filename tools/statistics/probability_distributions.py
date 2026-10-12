@@ -17,7 +17,7 @@ from . import _dist as dist
 from . import _ui
 from data import results
 from data.dataset import DataArray
-from theme.widgets import ComputeToolWindow, ParameterBox
+from ui.widgets import ComputeToolWindow, ParameterBox
 
 TOOL_NAME = "Probability Distributions"
 TOOL_DESCRIPTION = "Density, cumulative probability and quantiles of common distributions (Normal, t, Chi-square, F, Exponential, Uniform, Gamma, Beta, Binomial, Poisson)."

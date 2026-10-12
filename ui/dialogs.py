@@ -1,5 +1,5 @@
 """
-Themed popups for mtools 
+Themed popups for mtools.
 File selection uses the native tkinter.filedialog, since OS file dialogs can't be themed anyway.
 """
 
@@ -77,4 +77,9 @@ def ask_string(parent, title: str, message: str) -> str | None:
 
 def ask_open_file(parent, title: str = "Select file", filetypes=(("All files", "*.*"),)) -> str | None:
     path = filedialog.askopenfilename(parent=parent, title=title, filetypes=filetypes)
+    return path or None
+
+
+def ask_save_file(parent, title: str = "Save file", defaultextension: str = ".csv", filetypes=(("CSV", "*.csv"), ("All files", "*.*"))) -> str | None:
+    path = filedialog.asksaveasfilename(parent=parent, title=title, defaultextension=defaultextension, filetypes=filetypes)
     return path or None

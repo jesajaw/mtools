@@ -17,4 +17,4 @@ def dataset_to_points(dataset):
         return dataset.get("x").values
     cols = [dataset.get(n).values for n in ("x", "y", "z") if n in dataset.axes or n in dataset.data]
     return list(zip(*cols))
-    
+    

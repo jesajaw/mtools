@@ -17,7 +17,7 @@ from . import _basic as b
 from . import _ui
 from data import results
 from data.dataset import DataArray
-from theme.widgets import ComputeToolWindow
+from ui.widgets import ComputeToolWindow
 
 TOOL_NAME = "SMAPE"
 TOOL_DESCRIPTION = "Symmetric mean absolute percentage error between actual values and forecasts (or a fit and its data), with the point-wise error."

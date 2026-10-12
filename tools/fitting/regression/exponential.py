@@ -16,7 +16,7 @@ import math
 import tools.mathlib as t
 from . import _points
 from data import results
-from theme.widgets import ComputeToolWindow
+from ui.widgets import ComputeToolWindow
 
 TOOL_NAME = "Exponential"
 TOOL_DESCRIPTION = "Least-squares exponential fit: y = a*e^(b*x) (2D), or z = a*e^(b*x + c*y) (3D), via log-linearization."
@@ -76,4 +76,4 @@ class ToolWindow(ComputeToolWindow):
 
 
 def open_window(parent) -> None:
-    ToolWindow(parent)
+    ToolWindow(parent)

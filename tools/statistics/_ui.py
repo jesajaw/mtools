@@ -2,7 +2,7 @@
 Shared UI pieces of the statistics tools (private helper, skipped by tool discovery).
 """
 
-from theme.widgets import make_mode_cell
+from ui.widgets import make_mode_cell
 
 CELL_HEIGHT = 40
 

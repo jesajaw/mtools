@@ -33,6 +33,14 @@ def save_dataset_csv(path: str, dataset) -> None:
                 f.write(f"# equation: {md['equation']}\n")
             for a in dataset.annotations_of("parameter"):
                 f.write(f"# {a.name} = {a.data['value']!r}\n")
+        elif md.get("kind") == "statistics":  # statistics result: heading and every reported value, same '#' convention
+            f.write(f"# tool: {md.get('tool')}\n")
+            for line in str(md.get("title") or "").splitlines():
+                f.write(f"# {line}\n")
+            for a in dataset.annotations_of("statistic"):
+                group = a.metadata.get("group")
+                value = a.data["value"]
+                f.write(f"# {f'{group}.{a.name}' if group else a.name} = {'' if value is None else value!r}\n")
         writer = csv.writer(f)
         writer.writerow([a.name for a in arrays])
         for row in zip(*(a.values for a in arrays)):

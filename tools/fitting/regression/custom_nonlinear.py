@@ -7,7 +7,7 @@ import math
 import tools.mathlib as t
 from . import _points
 from data import results
-from theme.widgets import ComputeToolWindow
+from ui.widgets import ComputeToolWindow
 
 TOOL_NAME = "Custom Non-linear Fit"
 TOOL_DESCRIPTION = "Fit an arbitrary user-defined model y = f(x; params) via Levenberg-Marquardt."

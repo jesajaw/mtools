@@ -29,7 +29,7 @@ def load_points(path: str):
     Reads points from a file, format inferred from the extension.
     Currently supports .csv/.txt/.dat -- parsing itself is handled by
     parse_points() below, so file input and manual text entry (see
-    theme.widgets.FileInputRow) go through identical logic."""
+    ui.widgets.FileInputRow) go through identical logic."""
     ext = Path(path).suffix.lower()
     if ext not in (".csv", ".txt", ".dat"):
         raise ValueError(f"Unsupported file format: '{ext or '(none)'}'.")

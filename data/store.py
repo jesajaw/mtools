@@ -77,4 +77,4 @@ def label() -> str | None:
 
 def clear() -> None:
     _history.clear()
-    _notify()
+    _notify()

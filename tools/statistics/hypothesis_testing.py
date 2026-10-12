@@ -17,7 +17,7 @@ from . import _basic as b
 from . import _dist as dist
 from . import _ui
 from data import results
-from theme.widgets import ComputeToolWindow, ParameterBox
+from ui.widgets import ComputeToolWindow, ParameterBox
 
 TOOL_NAME = "Hypothesis Testing"
 TOOL_DESCRIPTION = "t-tests (one-sample, Welch, paired), Mann-Whitney U, F-test of variances and Jarque-Bera normality test, with p-value, effect size and decision."
