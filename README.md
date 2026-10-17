@@ -137,6 +137,9 @@ Switch the color palette via `COLOR_SCHEME` and the font preset via `FONT_SCHEME
 
 Standard library only -- see `requirements.txt`. tkinter ships with the standard Windows/macOS Python installers; on some Linux distros install it separately (`sudo apt install python3-tk`).
 
+## 🙏 Acknowledgments
+Thanks to [Claude](https://claude.ai/) for helping build the UI and for taking on the tedious parts: data formatting, saving, and the many small fixes/debbunging in between.
+
 ## License
 
 MIT, see `LICENSE`.
