@@ -7,11 +7,13 @@ It knows nothing about where the tools come from -- main.py hands it the discove
 import tkinter as tk
 from tkinter import ttk
 
-from data import loaders, savers, store
+from data import autosave, session, store
 from . import dialogs, style
 from .widgets import Cell
+from .workspace import WorkspaceWindow
 
 GRID_COLUMNS_MAX = style.LAYOUT.grid_columns
+AUTOSAVE_INTERVAL_MS = 30_000
 
 
 class MainWindow:
@@ -26,55 +28,109 @@ class MainWindow:
         self._build_grid()
         self._size_to_content()
 
+        store.subscribe(self._refresh_io_status)  # tools add results to the workspace too -- the bar must follow, not only Load/Clear
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
+        self._workspace_window = None
+        self._autosaver = autosave.AutoSaver()
+        self._autosave_job = self.root.after(AUTOSAVE_INTERVAL_MS, self._autosave_tick)
+        self.root.after(300, self._offer_recovery)  # after the window is up
+
     def _build_data_bar(self) -> None:
         row = ttk.Frame(self.root, padding=(10, 8))
         row.pack(fill="x")
 
         cell_height = style.LAYOUT.io_cell_height
 
-        self.input_cell = Cell(row, "Load", self._load, status_text=self._io_status_text(), height=cell_height)
+        self.input_cell = Cell(row, "Load", self._load, status_text=self._io_status_text(), extra_button=("Workspace", self._open_workspace), height=cell_height)
         self.input_cell.pack(side="left", fill="x", expand=True, padx=(0, 12))
 
-        output_cell = Cell(row, "Save", self._save, extra_button=("Clear", self._clear), height=cell_height)
-        output_cell.pack(side="right", fill="x", expand=True, padx=(12, 0))
+        self.output_cell = Cell(row, "Save", self._save, status_text=self._save_status_text(), extra_button=("Clear", self._clear), height=cell_height)
+        self.output_cell.pack(side="right", fill="x", expand=True, padx=(12, 0))
 
         ttk.Separator(self.root, orient="horizontal").pack(fill="x", padx=10, pady=(10, 0))
 
     def _io_status_text(self) -> str:
         if not store.is_loaded():
             return "no data loaded"
-        ds = store.get()
-        n = len(next(iter(ds.axes.values())).values) if ds.axes else "?"
-        return f"{store.label()} ({n} row(s))"
+        text = store.get().describe()
+        n = len(store.all())
+        return f"{text}  [{n} datasets in workspace]" if n > 1 else text
+
+    def _save_status_text(self) -> str:
+        unsaved = len(store.unsaved())
+        if unsaved:
+            return f"{unsaved} unsaved result(s)"
+        return session.last_saved_text() or "nothing saved yet"
+
+    def _refresh_io_status(self) -> None:
+        self.input_cell.set_status(self._io_status_text())
+        self.output_cell.set_status(self._save_status_text())
 
     def _load(self) -> None:
-        path = dialogs.ask_open_file(self.root, title="Load data", filetypes=(("Data files", "*.csv *.txt *.dat"), ("All files", "*.*")))
+        path = dialogs.ask_open_file(self.root, "Load data", session.OPEN_FILETYPES)
         if not path:
             return
         try:
-            dataset = loaders.load_dataset(path)
+            session.load_file(path)
         except Exception as e:
             dialogs.show_error(self.root, "Load failed", str(e))
-            return
-        store.add(dataset)
-        self.input_cell.set_status(self._io_status_text())
 
     def _save(self) -> None:
         if not store.is_loaded():
             dialogs.show_error(self.root, "Nothing to save", "No data currently loaded.")
             return
-        path = dialogs.ask_save_file(self.root, title="Save data")
+        path = dialogs.ask_save_file(self.root, "Save data", session.SAVE_FILETYPES, initialfile=session.suggest_filename(store.get()))
         if not path:
             return
         try:
-            savers.save_dataset_csv(path, store.get())
+            session.save_file(path, store.get(), whole_workspace=True)  # CSV/TSV: the latest dataset, JSON: the whole workspace
         except Exception as e:
             dialogs.show_error(self.root, "Save failed", str(e))
 
     def _clear(self) -> None:
-        if dialogs.ask_yes_no(self.root, title="Clear Data", message="Are you sure you want to clear all data?"):
+        if not store.is_loaded():
+            return
+        unsaved = len(store.unsaved())
+        warning = f"\n\n{unsaved} computed result(s) have not been saved." if unsaved else ""
+        if dialogs.ask_yes_no(self.root, title="Clear Data", message=f"Are you sure you want to clear all data?{warning}"):
             store.clear()
-            self.input_cell.set_status(self._io_status_text())
+
+    def _open_workspace(self) -> None:
+        window = self._workspace_window
+        if window is not None and window.winfo_exists():
+            window.lift()
+            return
+        self._workspace_window = WorkspaceWindow(self.root)
+
+    def _autosave_tick(self) -> None:
+        try:
+            self._autosaver.tick()
+        finally:
+            self._autosave_job = self.root.after(AUTOSAVE_INTERVAL_MS, self._autosave_tick)  # never let one failed tick stop the timer
+
+    def _offer_recovery(self) -> None:
+        info = autosave.pending()
+        if info is None:
+            return
+        when = f" (autosaved {info['saved_at'].replace('T', ' ')})" if info.get("saved_at") else ""
+        choice = dialogs.ask_choice(self.root, "Restore previous session", f"The last session ended with {info['n_unsaved']} unsaved result(s){when}, {info['n_datasets']} dataset(s) in total. Restore them?", ["Restore", "Discard"])
+        if choice == "Restore":
+            try:
+                autosave.restore()
+            except Exception as e:
+                dialogs.show_error(self.root, "Restore failed", str(e))
+        elif choice == "Discard":
+            autosave.discard()
+
+    def _on_close(self) -> None:
+        unsaved = len(store.unsaved())
+        if unsaved and not dialogs.ask_yes_no(self.root, title="Quit mtools", message=f"{unsaved} computed result(s) have not been saved and will be lost. Quit anyway?"):
+            return
+        self.root.after_cancel(self._autosave_job)
+        self._autosaver.close()
+        store.unsubscribe(self._refresh_io_status)
+        self.root.destroy()
 
     def _build_grid(self) -> None:
         outer = ttk.Frame(self.root)
@@ -206,7 +262,7 @@ class MainWindow:
 
         total_cell_rows = sum(-(-n // GRID_COLUMNS_MAX) for n in counts.values())
         width = style.LAYOUT.grid_width
-        ideal_height = 90 + 70 + len(counts) * style.LAYOUT.category_header_height + total_cell_rows * (style.CELL_HEIGHT + 12) + 40  # top margin + data bar/separator + category headers + cell rows + bottom margin
+        ideal_height = 90 + style.LAYOUT.io_cell_height + len(counts) * style.LAYOUT.category_header_height + total_cell_rows * (style.CELL_HEIGHT + 12) + 40  # top margin + data bar/separator + category headers + cell rows + bottom margin
         max_height = int(self.root.winfo_screenheight() * style.LAYOUT.max_height_fraction)
         height = min(ideal_height, max_height)
         self.root.geometry(f"{width}x{height}")

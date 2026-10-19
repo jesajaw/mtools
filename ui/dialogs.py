@@ -3,10 +3,22 @@ Themed popups for mtools.
 File selection uses the native tkinter.filedialog, since OS file dialogs can't be themed anyway.
 """
 
+import os
 import tkinter as tk
 from tkinter import ttk, filedialog
 
+from data import settings
 from . import style
+
+_last_dir: str | None = settings.get("last_dir")  # file dialogs reopen where the user last picked/saved a file (kept between sessions)
+if _last_dir and not os.path.isdir(_last_dir):
+    _last_dir = None
+
+
+def _remember_dir(path: str) -> None:
+    global _last_dir
+    _last_dir = os.path.dirname(path)
+    settings.set("last_dir", _last_dir)
 
 
 class ThemedDialog(tk.Toplevel):
@@ -75,11 +87,27 @@ def ask_string(parent, title: str, message: str) -> str | None:
     return None
 
 
+def show_info(parent, title: str, message: str) -> None:
+    ThemedDialog(parent, title, message, buttons=["OK"])
+
+
+def ask_choice(parent, title: str, message: str, buttons: list[str]) -> str | None:
+    # Several-button question; returns the clicked label (None if the window was closed/Escape)
+    return ThemedDialog(parent, title, message, buttons=buttons).result
+
+
 def ask_open_file(parent, title: str = "Select file", filetypes=(("All files", "*.*"),)) -> str | None:
-    path = filedialog.askopenfilename(parent=parent, title=title, filetypes=filetypes)
+    path = filedialog.askopenfilename(parent=parent, title=title, filetypes=filetypes, initialdir=_last_dir)
+    if path:
+        _remember_dir(path)
     return path or None
 
 
-def ask_save_file(parent, title: str = "Save file", defaultextension: str = ".csv", filetypes=(("CSV", "*.csv"), ("All files", "*.*"))) -> str | None:
-    path = filedialog.asksaveasfilename(parent=parent, title=title, defaultextension=defaultextension, filetypes=filetypes)
+def ask_save_file(parent, title: str = "Save file", filetypes=(("CSV", "*.csv"), ("All files", "*.*")), initialfile: str | None = None, defaultextension: str | None = None) -> str | None:
+    # Native save dialog (asks before overwriting itself); without an explicit defaultextension the first filetype's extension is appended if none was typed
+    if defaultextension is None:
+        defaultextension = os.path.splitext(filetypes[0][1].split()[0])[1] if filetypes else ""
+    path = filedialog.asksaveasfilename(parent=parent, title=title, filetypes=filetypes, defaultextension=defaultextension, initialdir=_last_dir, initialfile=initialfile or "")
+    if path:
+        _remember_dir(path)
     return path or None

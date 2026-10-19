@@ -61,8 +61,8 @@ def variance_interval(values, level: float) -> dict:
     s2 = b.variance(values)
     alpha = 1 - level
     chi = dist.ChiSquare(n - 1)
-    low, high = (n - 1) * s2 / chi.ppf(1 - alpha / 2), (n - 1) * s2 / chi.ppf(alpha / 2)
-    return {"n": n, "variance": s2, "var lower": low, "var upper": high, "std dev": math.sqrt(s2), "sd lower": math.sqrt(low), "sd upper": math.sqrt(high)}
+    lo, hi = (n - 1) * s2 / chi.ppf(1 - alpha / 2), (n - 1) * s2 / chi.ppf(alpha / 2)
+    return {"n": n, "variance": s2, "var lower": lo, "var upper": hi, "std dev": math.sqrt(s2), "sd lower": math.sqrt(lo), "sd upper": math.sqrt(hi)}
 
 
 def wilson(values, level: float) -> dict:
@@ -82,13 +82,13 @@ def median_interval(values, level: float) -> dict:
     tail = (1 - level) / 2
     binom = dist.Binomial(n, 0.5)
     # largest rank l (1-based) with P(B <= l-1) <= tail; the interval is [x_(l), x_(n-l+1)]
-    low, high, best = 1, (n + 1) // 2, 0
-    while low <= high:
-        mid = (low + high) // 2
+    lo, hi, best = 1, (n + 1) // 2, 0
+    while lo <= hi:
+        mid = (lo + hi) // 2
         if binom.cdf(mid - 1) <= tail:
-            best, low = mid, mid + 1
+            best, lo = mid, mid + 1
         else:
-            high = mid - 1
+            hi = mid - 1
     if best == 0:
         raise ValueError(f"n = {n} is too small for a {level:.0%} median interval -- use more data or a lower level.")
     upper_rank = n - best + 1

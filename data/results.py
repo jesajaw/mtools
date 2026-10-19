@@ -27,9 +27,8 @@ No tool formats anything itself: summarize() renders any such DataSet for displa
 import copy
 import math
 
-from data.dataset import DataSet, DataArray, Annotation
+from data.dataset import DataSet, DataArray, Annotation, COORDINATES
 
-COORDINATES = ("x", "y", "z")
 
 
 def fit_dataset(source: DataSet, tool: str, equation: str, params: dict, response, fitted, residual=None, residual_kind: str = "vertical", metadata: dict | None = None) -> DataSet:

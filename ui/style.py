@@ -56,7 +56,7 @@ class Layout:
     grid_columns: int = 4
     cell_gap: int = 12
     outer_padding: int = 40
-    io_cell_height: int = 70
+    io_cell_height: int = 96  # fits title + status line + the Clear button of the Save cell
     category_header_height: int = 34
     subcategory_row_height: int = 42
     max_height_fraction: float = 0.8
@@ -152,4 +152,4 @@ def force_dark_titlebar(window) -> None:
             rendering_policy = ctypes.c_int(2)
             ctypes.windll.dwmapi.DwmSetWindowAttribute(hwnd, 20, ctypes.byref(rendering_policy), ctypes.sizeof(rendering_policy))
         except Exception:
-            pass
+            pass

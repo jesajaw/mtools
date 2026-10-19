@@ -9,7 +9,7 @@ Reusable building blocks for tool windows, so each tool's ui doesn't have to reb
 
 import tkinter as tk
 from tkinter import ttk
-from data import store, savers, results
+from data import store, session, results
 from . import style, dialogs
 from data.dataset import DataSet
 
@@ -217,7 +217,7 @@ class ComputeToolWindow(ToolWindow):
     result_format is shown in the result area before the first compute(), as a dummy/template of what the real result will look like (e.g. "y = a*x^n + b*x^2 + ... + c") -- both are meant to be passed through from a tool's own TOOL_INSTRUCTIONS/
     RESULT_FORMAT module constants, alongside TOOL_NAME/TOOL_DESCRIPTION.
 
-    compute() returns a DataSet; run() puts it into the shared workspace automatically (replacing this window's previous result), so whatever tool you open next works on it (e.g. AFM Geometry -> Analysis). "Save" exports it as CSV.
+    compute() returns a DataSet; run() puts it into the shared workspace automatically (replacing this window's previous result), so whatever tool you open next works on it (e.g. AFM Geometry -> Analysis). "Save" exports it (CSV / TSV / JSON, see data/session.py).
     "Visualize" is a placeholder for now -- not wired up to anything yet.
 
     Class attributes for tools that need to deviate from the standard flow:
@@ -290,7 +290,7 @@ class ComputeToolWindow(ToolWindow):
             w.destroy()
 
         if store.is_loaded():
-            text = f"Using loaded data: {store.label()}"
+            text = f"Using loaded data: {store.get().describe()}"
         else:
             text = self.data_hint
         ttk.Label(self._data_row, text=text, style="Status.TLabel").pack(anchor="w")
@@ -340,15 +340,15 @@ class ComputeToolWindow(ToolWindow):
         self._grow_to_content()
 
     def _save(self) -> None:
-        # Exports this window's result as CSV (the result is already in the workspace -- no manual "send" step)
+        # Exports this window's result (CSV / TSV / JSON by extension) -- the result is already in the workspace, no manual "send" step
         if self._last_result is None:
             dialogs.show_error(self, "Nothing to save", "Compute a result first.")
             return
-        path = dialogs.ask_save_file(self, title="Save result")
+        path = dialogs.ask_save_file(self, "Save result", session.SAVE_FILETYPES, initialfile=session.suggest_filename(self._last_result))
         if not path:
             return
         try:
-            savers.save_dataset_csv(path, self._last_result)
+            session.save_file(path, self._last_result, whole_workspace=False)
         except Exception as e:
             dialogs.show_error(self, "Save failed", str(e))
 
@@ -373,4 +373,4 @@ def make_mode_cell(parent, modes: list[tuple], on_change=None, label_prefix: str
 
     cell = Cell(parent, title=title_for(0), on_click=cycle, status_text=status_for(0), width=width, height=height)
     cell.mode = lambda: modes[state["index"]][0]
-    return cell
+    return cell
